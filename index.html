@@ -54,11 +54,11 @@ body{font-family:var(--font-body);font-size:15px;line-height:1.45}
 header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
 header h1{font-family:var(--font-display);font-weight:400;font-size:clamp(24px,3.4vw,32px);line-height:1;margin:0;color:var(--ink)}
 header p{margin:0;color:var(--muted)}
-.layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) var(--side-w,320px);gap:16px;align-items:start}
 @media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}}
 
 /* stage */
-.stage{position:relative;min-width:0;height:max(520px,calc(100vh - 86px));border-radius:16px;overflow:hidden;background:var(--stage);
+.stage{position:relative;min-width:0;height:max(380px,calc(var(--stage-vh,100) * 1vh - 86px));border-radius:16px;overflow:hidden;background:var(--stage);
   box-shadow:0 0 0 1px var(--line);touch-action:none}
 @media (max-width:900px){.stage{height:max(460px,calc(100svh - 110px))}}
 #cv{display:block;width:100%;height:100%;cursor:grab}
@@ -158,7 +158,7 @@ header p{margin:0;color:var(--muted)}
 .palette i{width:18px;height:18px;border-radius:5px;flex:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
 
 /* side panel */
-aside{background:var(--panel);border-radius:14px;border:1px solid var(--line);min-width:0;overflow:hidden;display:flex;flex-direction:column;height:max(520px,calc(100vh - 86px))}
+aside{background:var(--panel);border-radius:14px;border:1px solid var(--line);min-width:0;overflow:hidden;display:flex;flex-direction:column;height:max(380px,calc(var(--stage-vh,100) * 1vh - 86px))}
 @media (max-width:900px){aside{height:auto}}
 aside section,.drawer section{padding:16px 18px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line)}
 h2{margin:0;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700}
@@ -166,6 +166,9 @@ h2{margin:0;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:v
 .tabs button{font:inherit;font-size:13px;font-weight:600;border:0;border-radius:8px;padding:7px;background:none;color:var(--muted);cursor:pointer}
 .tabs button[aria-selected="true"]{background:var(--panel-2);color:var(--ink)}
 .grid3{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+label.rng{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;font-size:12px;color:var(--muted);font-weight:600}
+label.rng input{grid-column:1/-1;width:100%;accent-color:var(--accent);margin:0}
+label.rng output{font-variant-numeric:tabular-nums;color:var(--ink)}
 label.chk{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink);cursor:pointer}
 label.chk input{width:18px;height:18px;accent-color:var(--accent);margin:0}
 label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:600;min-width:0}
@@ -204,12 +207,18 @@ select:disabled{color:var(--muted);opacity:.7}
 .cw-head button:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .chatwin form{padding:10px 12px;border-top:1px solid var(--line);display:flex;gap:8px}
 .chatwin .err{padding:0 12px 10px}
-.logsec{flex:none;border-bottom:0!important}
+.logsec{flex:none;border-bottom:0!important;padding-block:10px!important}
+.logtoggle{font:inherit;display:flex;align-items:center;justify-content:space-between;width:100%;border:0;background:none;color:var(--muted);cursor:pointer;padding:4px 0;
+  font-size:11px;letter-spacing:.09em;text-transform:uppercase;font-weight:700}
+.logtoggle svg{width:16px;height:16px;transition:transform .15s}
+.logtoggle[aria-expanded="true"] svg{transform:rotate(90deg)}
+.logtoggle:hover{color:var(--ink)}
+.logtoggle:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .logsec .log{max-height:min(180px,22vh)}
 .badge{min-width:20px;height:20px;border-radius:999px;background:var(--accent);color:#fff;font-size:12px;display:grid;place-items:center;padding:0 6px;font-variant-numeric:tabular-nums}
-.chat{list-style:none;margin:0;flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:6px;font-size:13px;padding:10px 12px}
+.chat{list-style:none;margin:0;flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:6px;font-size:var(--chat-fs,13px);padding:10px 12px}
 .chat li{display:flex;flex-direction:column;min-width:0}
-.chat .who{font-weight:700;font-size:12px;display:flex;gap:6px;align-items:center}
+.chat .who{font-weight:700;font-size:calc(var(--chat-fs,13px) - 1px);display:flex;gap:6px;align-items:center}
 .chat .who time{font-weight:500;color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
 .chat .tx{overflow-wrap:anywhere}
 .chat .empty{color:var(--muted);margin:auto;text-align:center}
@@ -235,6 +244,8 @@ body.chatonly #cwPop{display:none!important}
       <div class="tlbar">
       <button class="ovbtn" id="gearBtn" type="button" aria-expanded="false" aria-controls="drawer" aria-label="Настройки"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Настройки</span></button>
       <button class="ovbtn" id="camBtn" type="button" aria-label="Сбросить камеру"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></svg><span>Сбросить камеру</span></button>
+      <button class="ovbtn" id="zoomIn" type="button" aria-label="Приблизить" title="Приблизить"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button class="ovbtn" id="zoomOut" type="button" aria-label="Отдалить" title="Отдалить"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
       </div>
       <button class="ovbtn br" id="legendBtn" type="button" aria-expanded="false" aria-controls="legendPop" aria-label="Клетки и эффекты"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><path d="M14 16.5h6"/></svg><span>Клетки и эффекты</span></button>
       <div class="legendpop" id="legendPop" hidden><h2>Клетки и эффекты</h2><ul class="legend" id="legendPopList"></ul></div>
@@ -257,6 +268,11 @@ body.chatonly #cwPop{display:none!important}
                 <select id="optKerb"></select>
               </label>
             </div>
+            <h2>Размеры</h2>
+            <label class="rng" for="szSide">Ширина чата <output id="szSideV"></output><input type="range" id="szSide" min="260" max="560" step="10"></label>
+            <label class="rng" for="szStage">Высота поля <output id="szStageV"></output><input type="range" id="szStage" min="55" max="100" step="5"></label>
+            <label class="rng" for="szChat">Текст в чате <output id="szChatV"></output><input type="range" id="szChat" min="11" max="22" step="1"></label>
+            <button class="btn light small" id="szReset" type="button" style="align-self:flex-start">Вернуть размеры по умолчанию</button>
           </section>
       <div id="vSetup">
         <section>
@@ -337,6 +353,9 @@ body.chatonly #cwPop{display:none!important}
             <label class="f" for="optKnock">Сбивание
               <select id="optKnock"><option value="garage">в гараж</option><option value="back3">на 3 клетки</option><option value="off">выключено</option></select>
             </label>
+            <label class="f" for="optAfk" style="grid-column:1/-1">Автоход, если игрок не ходит
+              <select id="optAfk"><option value="0">выключен</option><option value="15">через 15 секунд</option><option value="30">через 30 секунд</option><option value="60">через 1 минуту</option><option value="120">через 2 минуты</option></select>
+            </label>
           </div>
         </section>
         <section>
@@ -362,6 +381,7 @@ body.chatonly #cwPop{display:none!important}
             <div class="turn"><span class="sw" id="turnSw"></span><span id="turnName"></span></div>
             <div class="turn-sub" id="turnSub"></div>
             <p class="msg" id="msg" aria-live="polite"></p>
+            <div class="turn-sub" id="afkLine"></div>
           </div>
           <button class="btn" id="rollBtn" type="button">Бросить</button>
         </div>
@@ -383,8 +403,8 @@ body.chatonly #cwPop{display:none!important}
         <p class="err" id="chatErr"></p>
       </div>
       <section class="logsec">
-        <h2>Журнал заезда</h2>
-        <ul class="log" id="log"></ul>
+        <button type="button" class="logtoggle" id="logToggle" aria-expanded="false" aria-controls="log"><span>Журнал заезда</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+        <ul class="log" id="log" hidden></ul>
       </section>
     </aside>
   </div>
@@ -434,6 +454,7 @@ const PALETTE=COLORS.concat([
 const TYPES={
   chaos:{name:'Рандом',rule:'случайный сдвиг: от 5 клеток назад до 5 вперёд',bg:'#2fb4c4'},
   pit:{name:'Пит-стоп',rule:'игрок пропускает следующий ход',bg:'#e3e6ea'},
+  /* note: finishing needs an exact roll */
   bonus:{name:'Канистра',rule:'ещё один бросок',bg:'#f2a541'},
   light:{name:'Светофор',rule:'дальше эта машина едет только с 4, 5 или 6',bg:'#23263a'},
   camera:{name:'Камера',rule:'въехал с шестёркой — штраф 3 назад',bg:'#d65a52'},
@@ -484,7 +505,7 @@ function randomField(){
 }
 
 /* ---------- state ---------- */
-function defaultSettings(){ return {carsPer:2,laps:1,exit:'six',knock:'garage',randomEach:true,special:randomField()}; }
+function defaultSettings(){ return {carsPer:2,laps:1,exit:'six',knock:'garage',afk:30,randomEach:true,special:randomField()}; }
 function baseState(settings){
   return {v:2,status:'lobby',seq:0,host:null,settings:settings||defaultSettings(),
     players:[],cars:[],skip:[],cur:0,phase:'roll',roll:null,events:[],log:[],winner:null};
@@ -492,6 +513,7 @@ function baseState(settings){
 let S=baseState();
 let mode='local', setupTab='local';
 let lastSeq=-1, animating=false, busyWrite=false, wasInRoom=false;
+let afkStart=Date.now(), afkBusy=false;
 let animQ=Promise.resolve(), writeQ=Promise.resolve();
 let db=null, user=null, uid=null, roomRef=null, roomCode=null, unsub=null, chatUnsub=null;
 const names={}, avatars={};
@@ -525,10 +547,11 @@ function kickPlayer(s,id){
   if(s.status==='lobby'){ s.players.splice(pi,1); return; }
   s.cars=s.cars.filter(c=>c.p!==pi).map(c=>Object.assign({},c,{p:c.p>pi?c.p-1:c.p}));
   s.players.splice(pi,1); s.skip.splice(pi,1);
+  s.places=(s.places||[]).filter(x=>x!==pi).map(x=>x>pi?x-1:x);
   s.events=[{t:'reset'}];
-  if(s.players.length<2){ s.status='over'; s.winner=0; s.phase='roll'; s.roll=null; s.log.unshift(team(s,0)+' побеждают — соперников не осталось'); return; }
+  if(checkRaceOver(s)) return;
   if(s.cur>pi) s.cur--;
-  else if(s.cur===pi){ s.cur=s.cur%s.players.length; s.phase='roll'; s.roll=null; s.tries=0; s.swapCar=null; }
+  else if(s.cur===pi){ s.cur=s.cur%s.players.length; s.phase='roll'; s.roll=null; s.tries=0; s.swapCar=null; for(let g=0;g<s.players.length&&(s.places||[]).includes(s.cur);g++) s.cur=(s.cur+1)%s.players.length; }
 }
 /* a player's colour: their own choice, otherwise their slot colour, otherwise the first free one */
 const colIdx=(s,pi)=>{ const p=s.players[pi]; if(!p) return pi;
@@ -550,17 +573,27 @@ function where(s,c){
   return {k:'home',i:Math.min(HL-1,c.dist-re-1)};
 }
 function carLabel(s,ci){const c=s.cars[ci]; const k=s.cars.filter((x,i)=>x.p===c.p&&i<=ci).length; return team(s,c.p)+(s.settings.carsPer>1?' №'+k:'');}
-function canMove(s,c,v){ if(c.done) return false; if(c.dist===0&&s.settings.exit==='six'&&v!==6) return false; return true; }
+function canMove(s,c,v){
+  if(c.done) return false;
+  if(c.dist===0) return !(s.settings.exit==='six'&&v!==6);
+  if(c.light&&v<4) return true;               /* red light: the car may "try" and stay */
+  const nd=c.dist+v, goal=goalFor(s,c);
+  if(nd>goal) return false;                   /* finishing needs the exact number */
+  if(nd>ringEnd(s)&&s.cars.some(o=>o!==c&&o.p===c.p&&!o.done&&o.dist===nd)) return false;  /* own car already on that lane cell */
+  return true;
+}
+function needToFinish(s,c){ return goalFor(s,c)-c.dist; }
 
 function startMatch(s){
   freezeSlots(s);
   if(s.settings.randomEach) s.settings.special=randomField();
   s.cars=[]; s.players.forEach((p,pi)=>{for(let k=0;k<s.settings.carsPer;k++) s.cars.push({p:pi,dist:0,light:false,done:false});});
-  s.skip=s.players.map(()=>0); s.cur=0; s.phase='roll'; s.roll=null; s.winner=null; s.status='play'; s.tries=0;
+  s.skip=s.players.map(()=>0); s.cur=0; s.phase='roll'; s.roll=null; s.winner=null; s.status='play'; s.tries=0; s.places=[]; s.loser=null;
   s.log=['Старт! '+s.settings.carsPer+' '+plural(s.settings.carsPer,'машина','машины','машин')+' у каждого, '+s.settings.laps+' '+plural(s.settings.laps,'круг','круга','кругов')+'.'];
   s.events=[{t:'reset'}];
 }
 function doRoll(s,v,src){
+  s.lastSrc=src||'local';
   s.events.push({t:'die',v}); s.roll=v;
   const mov=s.cars.map((c,i)=>i).filter(i=>s.cars[i].p===s.cur&&canMove(s,s.cars[i],v));
   s.log.unshift(team(s,s.cur)+': выпало '+v+(src==='random.org'?' · random.org':''));
@@ -571,7 +604,9 @@ function doRoll(s,v,src){
       if(s.tries<3){ say(s,'Выпало '+v+'. Нужна шестёрка, чтобы выехать: попытка '+s.tries+' из 3, бросайте ещё.'); s.phase='roll'; s.roll=null; return; }
       say(s,'Выпало '+v+'. Три попытки без шестёрки — ход переходит.'); s.log.unshift(team(s,s.cur)+': три попытки без шестёрки'); return endTurn(s,false);
     }
-    say(s,'Выпало '+v+'. Ходить нечем — ход переходит.'); return endTurn(s,false);
+    const lane=s.cars.filter(c=>c.p===s.cur&&!c.done&&c.dist>0);
+    const need=lane.length&&lane.every(c=>c.dist+6>=goalFor(s,c))?' Чтобы доехать до финиша, нужно выбросить ровно '+[...new Set(lane.map(c=>needToFinish(s,c)))].sort().join(' или ')+'.':'';
+    say(s,'Выпало '+v+'. Ходить нечем — ход переходит.'+need); return endTurn(s,false);
   }
   s.tries=0;
   if(mov.length===1) return doMove(s,mov[0]);
@@ -614,6 +649,18 @@ function settleLane(s,ci){
   if(path.length) s.events.push({t:'move',car:ci,path});
   return c.dist>=goalFor(s,c);
 }
+function placeOf(s,pi){ const i=(s.places||[]).indexOf(pi); return i<0?0:i+1; }
+function checkRaceOver(s){
+  const left=s.players.map((p,i)=>i).filter(i=>!(s.places||[]).includes(i));
+  if(left.length>1) return false;
+  s.status='over'; s.phase='roll'; s.roll=null; s.sixBonus=false;
+  s.winner=(s.places&&s.places.length)?s.places[0]:(left[0]!=null?left[0]:0);
+  s.loser=left.length?left[0]:null;
+  if(s.loser!=null){ s.log.unshift(team(s,s.loser)+' проиграли — последние на трассе'); }
+  s.log.unshift('Гонка окончена! Победили '+team(s,s.winner));
+  say(s,'Гонка окончена! 1 место — '+team(s,s.winner)+(s.loser!=null?', последние — '+team(s,s.loser):'')+'.');
+  return true;
+}
 function finishCar(s,ci){
   const c=s.cars[ci]; c.dist=goalFor(s,c); c.done=true; c.light=false; s.log.unshift(carLabel(s,ci)+' на финише');
   /* the lane got one cell shorter: a teammate already standing on the new last free cell finishes too */
@@ -622,8 +669,12 @@ function finishCar(s,ci){
     s.cars.forEach((o,oi)=>{ if(o.p===c.p&&!o.done&&o.dist>ringEnd(s)&&o.dist>=goalFor(s,o)){ o.dist=goalFor(s,o); o.done=true; o.light=false; s.events.push({t:'move',car:oi,path:[o.dist]}); s.log.unshift(carLabel(s,oi)+' на финише'); moved=true; } });
   }
   if(s.cars.every(x=>x.p!==c.p||x.done)){
-    s.status='over'; s.winner=c.p; s.phase='roll'; s.roll=null;
-    s.log.unshift(team(s,c.p)+' побеждают!'); say(s,team(s,c.p)+' побеждают!'); return;
+    s.places=s.places||[]; if(!s.places.includes(c.p)) s.places.push(c.p);
+    const place=s.places.length;
+    s.log.unshift(team(s,c.p)+' финишируют: '+place+' место');
+    if(checkRaceOver(s)) return;
+    s.sixBonus=false;
+    say(s,team(s,c.p)+' финишируют на '+place+' месте! Гонка продолжается.'); endTurn(s,false); return;
   }
   say(s,carLabel(s,ci)+' на финише.'); endTurn(s,false);
 }
@@ -670,7 +721,9 @@ function doMove(s,ci){
   }
   endTurn(s,extra);
 }
-function swapTargets(s,ci){ const me=s.cars[ci]; return s.cars.map((o,i)=>i).filter(i=>{ const o=s.cars[i]; return o.p!==me.p&&!o.done&&where(s,o).k==='ring'; }); }
+function swapTargets(s,ci){ const me=s.cars[ci], re=ringEnd(s), a=where(s,me);
+  return s.cars.map((o,i)=>i).filter(i=>{ const o=s.cars[i]; if(o.p===me.p||o.done) return false; const b=where(s,o); if(b.k!=='ring'||a.k!=='ring') return false;
+    const nd=distAtCell(s,me,b.i), od=distAtCell(s,o,a.i); return nd>=1&&nd<=re&&od>=1&&od<=re&&where(s,{p:me.p,dist:nd}).i===b.i&&where(s,{p:o.p,dist:od}).i===a.i; }); }
 function distAtCell(s,c,cell){
   const re=ringEnd(s), base=((cell-START[slotOf(s,c.p)]+RL)%RL)+1, lap=Math.max(0,Math.floor((Math.min(c.dist,re)-1)/RL));
   let d=lap*RL+base; while(d>re&&d-RL>=1) d-=RL; return d;
@@ -702,12 +755,13 @@ function botSwap(s){
 }
 function endTurn(s,extra){
   s.phase='roll'; s.roll=null; s.tries=0; s.swapCar=null;
-  if(s.sixBonus&&s.status==='play'){ s.sixBonus=false; s.log.unshift(team(s,s.cur)+': шестёрка — ещё один ход'); say(s,'Выпала шестёрка — '+team(s,s.cur)+' ходят ещё раз!'); return; }
+  if(s.sixBonus&&s.status==='play'&&!(s.places||[]).includes(s.cur)){ s.sixBonus=false; s.log.unshift(team(s,s.cur)+': шестёрка — ещё один ход'); say(s,'Выпала шестёрка — '+team(s,s.cur)+' ходят ещё раз!'); return; }
   s.sixBonus=false;
   if(extra) return;
   const n=s.players.length;
   for(let g=0;g<n*3;g++){
     s.cur=(s.cur+1)%n;
+    if((s.places||[]).includes(s.cur)) continue;
     if(s.skip[s.cur]>0){ s.skip[s.cur]--; s.log.unshift(team(s,s.cur)+' стоят на пит-стопе и пропускают ход'); continue; }
     break;
   }
@@ -774,7 +828,7 @@ function receive(raw){
   animQ=animQ.then(async()=>{
     animating=true; updateDock();
     try{ if(canAnim) await playEvents(s.events); }catch(e){ console.error(e); }
-    animating=false; renderAll(); scheduleBot();
+    animating=false; afkStart=Date.now(); renderAll(); scheduleBot();
   });
 }
 
@@ -790,11 +844,15 @@ function cryptoRoll(){
   catch(e){ return 1+Math.floor(Math.random()*6); }
 }
 let getRoll=async()=>({v:cryptoRoll(),src:'local'});
+let USES_RANDOM_ORG=false;
 let rollingNow=false;
 async function actRoll(fromBot){
   if(!myTurn(fromBot)||S.phase!=='roll'||rollingNow) return;
   rollingNow=true; $('rollBtn').disabled=true;
+  if(ok3d&&die3d){ dieAnim.spin=true; dieAnim.start=performance.now(); }
+  if(USES_RANDOM_ORG) $('turnSub').textContent='Бросаем кубик через random.org…';
   let r; try{ r=await getRoll(); }catch(e){ r=null; }
+  if(ok3d) dieAnim.spin=false;
   if(!r||!(r.v>=1&&r.v<=6)) r={v:cryptoRoll(),src:'local'};
   rollingNow=false;
   if(!myTurn(fromBot)||S.phase!=='roll'){ updateDock(); return; }
@@ -809,6 +867,35 @@ function actSwap(ti,fromBot){
   if(!myTurn(fromBot)||S.phase!=='swap') return;
   commit(s=>doSwap(s,ti));
 }
+/* auto-move for players who stepped away: their own client acts on time, the room host steps in 3 s later as a backup */
+function afkTick(){
+  const el=$('afkLine'); if(!el) return;
+  const sec=+((S.settings&&S.settings.afk)||0), p=S.players[S.cur];
+  if(!sec||S.status!=='play'||animating||!p||(mode==='local'&&p.bot)){ el.textContent=''; return; }
+  const left=Math.ceil(sec-(Date.now()-afkStart)/1000);
+  const mine=mode==='local'||p.id===uid, backup=mode==='online'&&S.host===uid&&p.id!==uid;
+  el.textContent=left>0?(left<=10?'Автоход через '+left+' с':''):'Автоход…';
+  if(afkBusy||busyWrite||rollingNow) return;
+  if((mine&&left<=0)||(backup&&left<=-3)) doAfk();
+}
+async function doAfk(){
+  const seq=S.seq; afkBusy=true;
+  try{
+    if(S.phase==='roll'){
+      let r; try{ r=await getRoll(); }catch(e){ r=null; }
+      if(!r||!(r.v>=1&&r.v<=6)) r={v:cryptoRoll(),src:'local'};
+      if(S.seq!==seq||S.phase!=='roll'||S.status!=='play') return;
+      commit(s=>{ s.log.unshift(team(s,s.cur)+': автобросок — игрок не ходил'); doRoll(s,r.v,r.src); });
+    } else if(S.phase==='choose'){
+      if(S.seq!==seq) return;
+      commit(s=>{ s.log.unshift(team(s,s.cur)+': машина выбрана автоматически'); doMove(s,botPick(s)); });
+    } else if(S.phase==='swap'){
+      if(S.seq!==seq) return;
+      commit(s=>doSwap(s,botSwap(s)));
+    }
+  } finally { afkBusy=false; afkStart=Date.now(); }
+}
+setInterval(afkTick,500);
 function scheduleBot(){
   clearTimeout(botTimer);
   if(mode!=='local'||S.status!=='play') return;
@@ -835,6 +922,10 @@ const TRACKS={
   neon:{name:'Ночная неоновая',asph:'#232842',curb:'#4fd6ff',kerb:'#b45cff',grass:'#1f3b32',base:'#183028',centre:'#22433a',line:'rgba(120,225,255,.7)'},
   rally:{name:'Ралли: грунт',asph:'#8a6b4c',curb:'#eadbb8',kerb:null,grass:'#6e8848',base:'#566b37',centre:'#647d40',line:'rgba(255,245,220,.45)'},
   snow:{name:'Зимняя',asph:'#5d6878',curb:'#ffffff',kerb:'#2f7de1',grass:'#dfe9ef',base:'#b9c8d2',centre:'#d3e0e8',line:'rgba(255,255,255,.75)'},
+  lava:{name:'Вулканическая',asph:'#26201f',curb:'#ff6a1a',kerb:null,grass:'#3a2a26',base:'#1e1513',centre:'#4a322b',line:'rgba(255,170,90,.75)'},
+  ocean:{name:'Морское дно',asph:'#1f5a6e',curb:'#e9fbff',kerb:'#2a9fb5',grass:'#d8c79a',base:'#a8956a',centre:'#cdbb8d',line:'rgba(220,255,255,.75)'},
+  sakura:{name:'Сакура',asph:'#5b5d6b',curb:'#ffffff',kerb:'#e2557a',grass:'#b7d99a',base:'#86b06c',centre:'#a9cf8c',line:'rgba(255,255,255,.75)'},
+  halloween:{name:'Хэллоуин',asph:'#2a2233',curb:'#ff8a1f',kerb:'#1a1420',grass:'#3b2f4a',base:'#261d31',centre:'#45375a',line:'rgba(255,170,60,.7)'},
   space:{name:'Лунная',asph:'#2a2e3c',curb:'#a585ff',kerb:null,grass:'#4b505f',base:'#2c3039',centre:'#575d6d',line:'rgba(200,180,255,.75)'}
 };
 const KERBS={
@@ -843,6 +934,7 @@ const KERBS={
   rw:{name:'Красно-белая',curb:'#f4f4f4',kerb:'#d8352e'},
   neon:{name:'Неоновая голубая',curb:'#56e0ff',kerb:null,glow:true},
   violet:{name:'Неоновая фиолетовая',curb:'#a585ff',kerb:null,glow:true},
+  lavaglow:{name:'Лавовая',curb:'#ff6a1a',kerb:null,glow:true},
   track:{name:'Как у выбранной трассы'}
 };
 const STARS=Array.from({length:70},(_,i)=>{ const x=(i*37.7)%100, y=(i*61.3)%100, r=(i%3)+1; return 'radial-gradient('+r+'px '+r+'px at '+x.toFixed(1)+'% '+y.toFixed(1)+'%,rgba(255,255,255,'+(0.5+(i%4)*0.12).toFixed(2)+') 50%,transparent 51%)'; }).join(',');
@@ -850,6 +942,10 @@ const DESIGNS={
   grandprix:{name:'Гран-при',track:'race',kerb:'edge',pad:'#6a6f86',vars:{'--ground':'#0f141a','--stage':'radial-gradient(120% 95% at 50% 30%,#2b3846 0%,#1a232d 55%,#0e1318 100%)','--panel':'#161d25','--panel-2':'#202934','--glass':'rgba(17,23,30,.9)','--line':'#2b3643','--muted':'#93a2b1','--ink':'#eceef7','--page-bg':'linear-gradient(180deg,#151c24 0%,#0c1015 100%)','--dot':'#2f3b48','--accent':'#ee4f9b'}},
   night:{name:'Ночной город',track:'neon',kerb:'neon',pad:'#3b3866',vars:{'--ground':'#0b0a1d','--stage':'radial-gradient(120% 95% at 50% 30%,#33246a 0%,#16113a 55%,#07061a 100%)','--panel':'#14122b','--panel-2':'#1f1c3f','--glass':'rgba(17,15,38,.9)','--line':'#2e2a57','--muted':'#a6a1d4','--ink':'#efeaff','--page-bg':'linear-gradient(180deg,#17123a 0%,#07061a 100%)','--dot':'#2c2854','--accent':'#ff4fd8'}},
   desert:{name:'Пустыня',track:'rally',kerb:'track',pad:'#8f7a63',vars:{'--ground':'#1d140d','--stage':'radial-gradient(120% 95% at 50% 25%,#f6c27a 0%,#d07b3c 50%,#6e3a1d 100%)','--panel':'#2a1d14','--panel-2':'#3a2a1d','--glass':'rgba(38,26,17,.9)','--line':'#4c3727','--muted':'#cdb397','--ink':'#fbefe2','--page-bg':'linear-gradient(180deg,#3d2819 0%,#1a110b 100%)','--dot':'#4c3727','--accent':'#ff8a2a'}},
+  volcano:{name:'Вулкан',track:'lava',kerb:'lavaglow',pad:'#4a3a36',vars:{'--ground':'#120b09','--stage':'radial-gradient(120% 95% at 50% 75%,#ff7a2a 0%,#8a2412 35%,#2a0d08 70%,#0d0504 100%)','--panel':'#1e1311','--panel-2':'#2b1b17','--glass':'rgba(30,19,17,.9)','--line':'#47302a','--muted':'#d0a898','--ink':'#fff1ea','--page-bg':'linear-gradient(180deg,#2a120c 0%,#0d0504 100%)','--dot':'#47302a','--accent':'#ff6a1a'}},
+  ocean:{name:'Подводный мир',track:'ocean',kerb:'track',pad:'#8f8a76',vars:{'--ground':'#04121c','--stage':'radial-gradient(120% 95% at 50% 8%,#6fdcea 0%,#1a6f99 45%,#062a45 100%)','--panel':'#0b2233','--panel-2':'#123247','--glass':'rgba(11,34,51,.9)','--line':'#1e4a63','--muted':'#9fd0e0','--ink':'#ecfbff','--page-bg':'linear-gradient(180deg,#0e3a55 0%,#04121c 100%)','--dot':'#1e4a63','--accent':'#2fe0c8'}},
+  sakura:{name:'Сакура',track:'sakura',kerb:'track',pad:'#9a8f96',vars:{'--ground':'#1d1418','--stage':'radial-gradient(120% 95% at 50% 25%,#ffe3ec 0%,#f6b3c8 45%,#b9657f 100%)','--panel':'#2a1a21','--panel-2':'#3a2430','--glass':'rgba(42,26,33,.9)','--line':'#55364a','--muted':'#e2b9c8','--ink':'#fff3f7','--page-bg':'linear-gradient(180deg,#3a2230 0%,#1a1015 100%)','--dot':'#55364a','--accent':'#ff6f9b'}},
+  halloween:{name:'Хэллоуин',track:'halloween',kerb:'track',pad:'#4a3f55',vars:{'--ground':'#0f0a14','--stage':'radial-gradient(120% 95% at 50% 22%,#ff9a3c 0%,#6a2a7a 45%,#140a1e 100%)','--panel':'#1a1222','--panel-2':'#261a31','--glass':'rgba(26,18,34,.9)','--line':'#3e2b4f','--muted':'#c8a9de','--ink':'#fbf0ff','--page-bg':'linear-gradient(180deg,#26163a 0%,#0c0712 100%)','--dot':'#3e2b4f','--accent':'#ff8a1f'}},
   space:{name:'Космос',track:'space',kerb:'violet',pad:'#3c4154',vars:{'--ground':'#05070f','--stage':STARS+',radial-gradient(120% 95% at 50% 35%,#1d2452 0%,#0a0e25 55%,#03040b 100%)','--panel':'#0e1124','--panel-2':'#171b38','--glass':'rgba(14,17,36,.9)','--line':'#2a2f5a','--muted':'#a3a8d8','--ink':'#eef0ff','--page-bg':'linear-gradient(180deg,#0c1030 0%,#03040b 100%)','--dot':'#2a2f5a','--accent':'#9a7bff'}}
 };
 let skin='dark', design='grandprix', trackSkin='race', kerbSkin='edge';
@@ -1072,7 +1168,61 @@ function buildBoard(){
     const b=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.17,0.05),boardM); b.position.set(0.12,0.54,0); b.castShadow=true; g.add(b);
     const [gx,gz]=xz(rotG([CC-1,ARM-1.6],k)); g.position.set(gx,0,gz); g.rotation.y=[0.6,2.2,-1.0,3.7][k]; boardGroup.add(g);
   });
+  buildDecor();
   boardKey=keyOf();
+}
+function rng(seed){ return ()=>{ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+/* decoration on the empty ground, themed per design */
+function buildDecor(){
+  if(design!=='space'&&design!=='volcano') return;
+  const R=rng(9137+Object.keys(DESIGNS).indexOf(design)*101), B=BOARD, MS=o=>mat(Object.assign({roughness:.85},o));
+  const cells=[...RING,...HOME.flat()].map(xz), gar=GARAGE.map(xz), drives=[0,1,2,3].map(sl=>DRIVE(sl).map(xz));
+  const signs=[0,1,2,3].map(k=>xz(rotG([CC-1,ARM-1.6],k)));
+  const free=(x,z,r)=>{
+    if(Math.abs(x)>B/2-0.3-r||Math.abs(z)>B/2-0.3-r) return false;
+    if(Math.abs(x)<P*0.85+r&&Math.abs(z)<P*0.85+r) return false;
+    for(const c of cells) if(Math.abs(c[0]-x)<P*0.5+0.32+r&&Math.abs(c[1]-z)<P*0.5+0.32+r) return false;
+    for(const g of gar) if(Math.abs(g[0]-x)<1.475+0.3+r&&Math.abs(g[1]-z)<1.475+0.3+r) return false;
+    for(const d of drives){ const a=d[0], b=d[2], vx=b[0]-a[0], vz=b[1]-a[1], t=Math.max(0,Math.min(1,((x-a[0])*vx+(z-a[1])*vz)/(vx*vx+vz*vz))); if(Math.hypot(x-(a[0]+vx*t),z-(a[1]+vz*t))<0.55+r) return false; }
+    for(const s of signs) if(Math.hypot(s[0]-x,s[1]-z)<0.45+r) return false;
+    return true;
+  };
+  const spots=[];
+  for(let gx=-B/2+0.5;gx<B/2-0.3;gx+=0.62) for(let gz=-B/2+0.5;gz<B/2-0.3;gz+=0.62){
+    const x=gx+(R()-.5)*0.4, z=gz+(R()-.5)*0.4;
+    if(free(x,z,0.18)&&!spots.some(p=>Math.hypot(p[0]-x,p[1]-z)<0.5)) spots.push([x,z]);
+  }
+  const G=new THREE.Group(); boardGroup.add(G);
+  const add=(geo,m,x,y,z,sh=true)=>{ const o=new THREE.Mesh(geo,m); o.position.set(x,y,z); o.castShadow=sh; o.receiveShadow=true; G.add(o); return o; };
+  const theme=design;
+  if(theme==='volcano'){
+    const rock=MS({color:'#1d1614',flatShading:true}), rim=MS({color:'#2a1a16',flatShading:true}), cone=MS({color:'#3a2620',flatShading:true});
+    const lava=mat({color:'#ff7a1a',emissive:'#ff5a0a',emissiveIntensity:1.3,roughness:.4}), lavaHot=mat({color:'#ffd36b',emissive:'#ffb347',emissiveIntensity:1.2,roughness:.4});
+    const smoke=new THREE.MeshStandardMaterial({color:lin('#9a8f88'),transparent:true,opacity:.32,roughness:1,depthWrite:false});
+    spots.forEach(([x,z])=>{
+      const r=R();
+      if(r<0.2){ const k=0.14+R()*0.12;
+        const t=add(new THREE.TorusGeometry(k*1.05,0.035,6,20),rim,x,0.03,z,false); t.rotation.x=Math.PI/2;
+        add(new THREE.CircleGeometry(k,20),lava,x,0.035,z,false).rotation.x=-Math.PI/2;
+        add(new THREE.CircleGeometry(k*0.45,16),lavaHot,x,0.037,z,false).rotation.x=-Math.PI/2; }
+      else if(r<0.45){ const k=0.11+R()*0.12; const o=add(new THREE.DodecahedronGeometry(k,0),rock,x,0.03+k*0.5,z); o.rotation.set(R()*3,R()*3,R()*3); o.scale.y=0.7;
+        if(R()<0.6){ const c=add(new THREE.BoxGeometry(k*1.1,0.012,0.02),lava,x,0.03+k*0.85,z,false); c.rotation.y=R()*3; } }
+      else if(r<0.53){ const h=0.5+R()*0.2;
+        add(new THREE.CylinderGeometry(0.1,0.32,h,9),cone,x,0.03+h/2,z);
+        add(new THREE.CircleGeometry(0.085,12),lava,x,0.035+h,z,false).rotation.x=-Math.PI/2;
+        const fl=add(new THREE.BoxGeometry(0.04,h*0.75,0.03),lava,x+0.13,0.03+h*0.45,z,false); fl.rotation.z=-0.42;
+        [[0,0.12,0.06],[0.03,0.24,0.08],[-0.02,0.37,0.1]].forEach(([dx,dy,rr])=>add(new THREE.SphereGeometry(rr,10,8),smoke,x+dx,0.03+h+dy,z,false)); }
+    });
+  } else if(theme==='space'){
+    const rockM=MS({color:'#6d7282',flatShading:true}), crater=MS({color:'#3d414e',roughness:1}), rim=MS({color:'#5d6271',flatShading:true});
+    const crys=[mat({color:'#a585ff',emissive:'#8a5cff',emissiveIntensity:.9,roughness:.3}),mat({color:'#56e0ff',emissive:'#2bc6ff',emissiveIntensity:.9,roughness:.3})];
+    spots.forEach(([x,z])=>{
+      const r=R();
+      if(r<0.25){ const k=0.16+R()*0.14; const t=add(new THREE.TorusGeometry(k,0.04,6,18),rim,x,0.03,z,false); t.rotation.x=Math.PI/2; add(new THREE.CircleGeometry(k,18),crater,x,0.012,z,false).rotation.x=-Math.PI/2; }
+      else if(r<0.5){ const k=0.07+R()*0.1; const o=add(new THREE.IcosahedronGeometry(k,0),rockM,x,0.03+k*0.55,z); o.rotation.set(R()*3,R()*3,R()*3); }
+      else if(r<0.68){ const m=crys[Math.floor(R()*2)]; for(let i=0;i<3;i++){ const h=0.14+R()*0.18; const c=add(new THREE.OctahedronGeometry(0.05,0),m,x+(R()-.5)*0.14,0.03+h/2,z+(R()-.5)*0.14); c.scale.set(1,h/0.1,1); c.rotation.z=(R()-.5)*0.5; } }
+    });
+  }
 }
 const carTypeOf=pi=>{ const p=S.players[pi]; return p&&CAR_TYPES_LIST[p.car]?p.car:'sport'; };
 function carModel(hex,type){
@@ -1275,8 +1425,8 @@ function updateDock(){
   if(st==='over'){
     const w=S.winner;
     $('turnSw').style.background=col(S,w).hex;
-    $('turnName').textContent=(mode==='online'?pName(w)+' · ':'')+team(S,w)+' — победа!';
-    $('turnSub').textContent='Все машины команды на финише';
+    $('turnName').textContent='Гонка окончена · 1 место — '+(mode==='online'?pName(w)+' · ':'')+team(S,w);
+    $('turnSub').textContent=(S.places||[]).map((p,i)=>(i+1)+' — '+team(S,p)).concat(S.loser!=null?['последние — '+team(S,S.loser)]:[]).join(' · ');
     if(!animating) $('msg').textContent=mode==='online'&&S.host!==uid?'Хозяин комнаты может начать новую гонку.':'Сыграем ещё?';
     btn.textContent='Новая гонка'; btn.disabled=animating||(mode==='online'&&S.host!==uid);
     btn.onclick=newRace; return;
@@ -1287,7 +1437,7 @@ function updateDock(){
   if(mode==='online') who=(p.id===uid?'Ваш ход':'Ходит '+pName(S.cur))+' · '+team(S,S.cur);
   else who='Ходят '+team(S,S.cur)+(p.bot?' (компьютер)':'');
   $('turnName').textContent=who;
-  $('turnSub').textContent=S.phase==='swap'?'Обмен: выберите машину соперника':S.phase==='choose'?'Выпало '+S.roll+' — выберите машину':(S.tries?'Нужна шестёрка: попытка '+(S.tries+1)+' из 3':'Бросьте кубик — можно нажать на кубик на поле');
+  $('turnSub').textContent=S.phase==='swap'?'Обмен: выберите машину соперника':S.phase==='choose'?'Выпало '+S.roll+' — выберите машину':(S.tries?'Нужна шестёрка: попытка '+(S.tries+1)+' из 3':'Бросьте кубик — можно нажать на кубик на поле')+(USES_RANDOM_ORG&&S.lastSrc?' · прошлый бросок: '+(S.lastSrc==='random.org'?'random.org':'встроенный генератор'):'');
   if(S.phase==='choose'&&!animating) setDieStill(S.roll);
   const mine=myTurn(false);
   btn.onclick=()=>actRoll(false);
@@ -1301,7 +1451,7 @@ function updateDock(){
       if(c.done) return;
       const ok=canMove(S,c,S.roll);
       const b=document.createElement('button'); b.type='button'; b.style.setProperty('--carc',col(S,c.p).hex);
-      const st=c.dist===0?(S.settings.exit==='six'?(ok?'выехать на старт':'в гараже, нужна 6'):'в гараже'):c.light?'светофор: нужно 4+':c.dist>re?'финишная дорожка':'пройдено '+c.dist+' из '+re;
+      const st=c.dist===0?(S.settings.exit==='six'?(ok?'выехать на старт':'в гараже, нужна 6'):'в гараже'):c.light?'светофор: нужно 4+':(!ok&&c.dist+S.roll>goalFor(S,c))?'до финиша ровно '+needToFinish(S,c):c.dist>re?'финишная дорожка':'пройдено '+c.dist+' из '+re;
       b.innerHTML='<span class="k">'+k+'</span> Машина '+k+' <small>'+st+'</small>';
       b.disabled=!mine||!ok; b.onclick=()=>actChoose(i,false);
       box.appendChild(b);
@@ -1328,7 +1478,8 @@ function renderCards(){
     const cur=(S.status==='play'&&pi===S.cur)||(S.status==='over'&&pi===S.winner);
     d.className='pcard'+(cur?' cur':''); d.style.setProperty('--c',c.hex);
     const role=(mode==='local'?(p.bot?'Компьютер':'Человек'):(p.id===S.host?'Хозяин':'Игрок'))+' · '+CAR_TYPES_LIST[carTypeOf(pi)];
-    const now=S.status==='over'?(pi===S.winner?'<span class="now">победа</span>':''):(cur?'<span class="now">ходит</span>':'');
+    const pl=placeOf(S,pi);
+    const now=pl?'<span class="now">'+pl+' место</span>':(S.status==='over'&&pi===S.loser)?'<span class="now" style="background:#6b7280">последние</span>':(cur?'<span class="now">ходит</span>':'');
     let dots='';
     S.cars.forEach(x=>{ if(x.p!==pi) return; dots+='<i class="'+(x.done?'fin':x.dist>0?'on':'')+'" title="'+(x.done?'финиш':x.dist>0?'на трассе':'в гараже')+'"></i>'; });
     const skip=S.skip&&S.skip[pi]?'<span class="rt">· пит-стоп</span>':'';
@@ -1361,8 +1512,8 @@ function updateSide(){
 }
 function renderSettings(){
   const ed=canEditField(), st=S.settings;
-  $('optCars').value=String(st.carsPer); $('optLaps').value=String(st.laps); $('optExit').value=st.exit||'any'; $('optKnock').value=st.knock||'garage';
-  ['optCars','optLaps','optExit','optKnock','optRandom','edClassic','edRandom','edClear'].forEach(id=>$(id).disabled=!ed);
+  $('optCars').value=String(st.carsPer); $('optLaps').value=String(st.laps); $('optExit').value=st.exit||'any'; $('optKnock').value=st.knock||'garage'; $('optAfk').value=String(st.afk==null?0:st.afk);
+  ['optCars','optLaps','optExit','optKnock','optAfk','optRandom','edClassic','edRandom','edClear'].forEach(id=>$(id).disabled=!ed);
   $('optRandom').checked=!!st.randomEach;
   $('editNote').textContent=ed?'Нажмите на клетку трассы, чтобы выбрать её тип, или заполните трассу кнопкой. Стартовые клетки не меняются.':'Трассу и правила настраивает хозяин комнаты.';
   const counts={}; Object.values(st.special).forEach(t=>counts[t]=(counts[t]||0)+1);
@@ -1697,6 +1848,7 @@ $('optCars').onchange=e=>setSettings({carsPer:+e.target.value});
 $('optLaps').onchange=e=>setSettings({laps:+e.target.value});
 $('optExit').onchange=e=>setSettings({exit:e.target.value});
 $('optKnock').onchange=e=>setSettings({knock:e.target.value});
+$('optAfk').onchange=e=>setSettings({afk:+e.target.value});
 $('myCar').onchange=e=>setMyCar(e.target.value);
 $('myColor').onchange=e=>setMyColor(+e.target.value);
 $('edClassic').onclick=()=>setSettings({special:classicField(),randomEach:false});
@@ -1714,6 +1866,32 @@ $('leaveRoom').onclick=leaveRoom;
 $('toMenu').onclick=toMenu;
 $('skipTurn').onclick=skipTurn;
 $('camBtn').onclick=fitCamera;
+(()=>{ let open=false; try{ open=localStorage.getItem('mashinki-log')==='1'; }catch(e){}
+  const set=v=>{ open=v; $('log').hidden=!v; $('logToggle').setAttribute('aria-expanded',String(v)); try{ localStorage.setItem('mashinki-log',v?'1':'0'); }catch(e){} };
+  set(open); $('logToggle').onclick=()=>set(!open); })();
+const SZ_DEF={side:320,stage:100,chat:13};
+let sizes=Object.assign({},SZ_DEF);
+try{ Object.assign(sizes,JSON.parse(localStorage.getItem('mashinki-sizes')||'{}')); }catch(e){}
+function applySizes(save){
+  const r=document.documentElement.style;
+  r.setProperty('--side-w',sizes.side+'px'); r.setProperty('--stage-vh',String(sizes.stage)); r.setProperty('--chat-fs',sizes.chat+'px');
+  $('szSide').value=sizes.side; $('szStage').value=sizes.stage; $('szChat').value=sizes.chat;
+  $('szSideV').textContent=sizes.side+' px'; $('szStageV').textContent=sizes.stage+'% экрана'; $('szChatV').textContent=sizes.chat+' px';
+  if(save){ try{ localStorage.setItem('mashinki-sizes',JSON.stringify(sizes)); }catch(e){} }
+}
+[['szSide','side'],['szStage','stage'],['szChat','chat']].forEach(([id,k])=>{ $(id).addEventListener('input',e=>{ sizes[k]=+e.target.value; applySizes(true); }); });
+$('szReset').onclick=()=>{ sizes=Object.assign({},SZ_DEF); applySizes(true); setTimeout(fitCamera,60); };
+applySizes(false);
+function zoomBy(f){
+  if(!ok3d) return;
+  const from=camera.zoom, to=Math.max(controls.minZoom,Math.min(controls.maxZoom,from*f)), t0=performance.now();
+  const step=t=>{ const a=Math.min(1,(t-t0)/180); camera.zoom=from+(to-from)*(1-Math.pow(1-a,3)); camera.updateProjectionMatrix(); if(a<1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+$('zoomIn').onclick=()=>zoomBy(1.25);
+$('zoomOut').onclick=()=>zoomBy(1/1.25);
+document.addEventListener('keydown',e=>{ const tag=(e.target.tagName||'').toLowerCase(); if(tag==='input'||tag==='select'||tag==='textarea') return;
+  if(e.key==='+'||e.key==='='){ zoomBy(1.25); } else if(e.key==='-'||e.key==='_'){ zoomBy(1/1.25); } });
 $('optTrack').innerHTML=Object.keys(TRACKS).map(k=>'<option value="'+k+'">'+TRACKS[k].name+'</option>').join('');
 $('optKerb').innerHTML=Object.keys(KERBS).map(k=>'<option value="'+k+'">'+KERBS[k].name+'</option>').join('');
 $('optSkin').innerHTML=Object.keys(DESIGNS).map(k=>'<option value="'+k+'">'+DESIGNS[k].name+'</option>').join('');
@@ -1748,38 +1926,34 @@ $('cwPop').onclick=()=>{
 };
 function selectCode(){ const r=document.createRange(); r.selectNodeContents($('roomCode')); const s=getSelection(); s.removeAllRanges(); s.addRange(r); }
 
-/* ---------- random.org dice ---------- */
-const RO={buf:[],busy:null,fail:0,until:0};
-function roFill(){
-  if(RO.busy) return RO.busy;
-  RO.busy=(async()=>{
-    const ctl=new AbortController(), timer=setTimeout(()=>ctl.abort(),3500);
-    try{
-      let nums=[];
-      const key=(window.RANDOM_ORG_KEY||'').trim();
-      if(key){
-        const r=await fetch('https://api.random.org/json-rpc/4/invoke',{method:'POST',headers:{'Content-Type':'application/json'},signal:ctl.signal,
-          body:JSON.stringify({jsonrpc:'2.0',method:'generateIntegers',params:{apiKey:key,n:30,min:1,max:6,replacement:true},id:Date.now()})});
-        const j=await r.json(); nums=(j&&j.result&&j.result.random&&j.result.random.data)||[];
-      } else {
-        const r=await fetch('https://www.random.org/integers/?num=30&min=1&max=6&col=1&base=10&format=plain&rnd=new',{signal:ctl.signal,cache:'no-store'});
-        if(!r.ok) throw new Error('HTTP '+r.status);
-        nums=(await r.text()).trim().split(/\s+/).map(Number);
-      }
-      nums=nums.filter(x=>Number.isInteger(x)&&x>=1&&x<=6);
-      if(!nums.length) throw new Error('empty');
-      RO.buf.push(...nums); RO.fail=0;
-    }catch(e){ RO.fail++; RO.until=Date.now()+Math.min(600000,15000*RO.fail); console.warn('random.org недоступен, кубик бросает встроенный генератор',e); }
-    finally{ clearTimeout(timer); RO.busy=null; }
-  })();
-  return RO.busy;
+/* ---------- random.org dice: one request per roll ---------- */
+USES_RANDOM_ORG=true;
+const RO={fail:0,until:0};
+async function roOne(){
+  const ctl=new AbortController(), timer=setTimeout(()=>ctl.abort(),3000);
+  try{
+    const key=(window.RANDOM_ORG_KEY||'').trim();
+    let v=null;
+    if(key){
+      const r=await fetch('https://api.random.org/json-rpc/4/invoke',{method:'POST',headers:{'Content-Type':'application/json'},signal:ctl.signal,
+        body:JSON.stringify({jsonrpc:'2.0',method:'generateIntegers',params:{apiKey:key,n:1,min:1,max:6,replacement:true},id:Date.now()})});
+      const j=await r.json(); v=j&&j.result&&j.result.random&&j.result.random.data&&j.result.random.data[0];
+    } else {
+      const r=await fetch('https://www.random.org/integers/?num=1&min=1&max=6&col=1&base=10&format=plain&rnd=new&_='+Date.now(),{signal:ctl.signal,cache:'no-store'});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      v=parseInt((await r.text()).trim(),10);
+    }
+    if(!(Number.isInteger(v)&&v>=1&&v<=6)) throw new Error('bad value');
+    RO.fail=0; return v;
+  } finally { clearTimeout(timer); }
 }
 getRoll=async()=>{
-  if(!RO.buf.length&&Date.now()>=RO.until) await roFill();
-  if(RO.buf.length){ const v=RO.buf.shift(); if(RO.buf.length<8&&Date.now()>=RO.until) roFill(); return {v,src:'random.org'}; }
+  if(Date.now()>=RO.until){
+    try{ return {v:await roOne(),src:'random.org'}; }
+    catch(e){ RO.fail++; RO.until=Date.now()+Math.min(120000,10000*RO.fail); console.warn('random.org недоступен, бросок сделан встроенным генератором',e); }
+  }
   return {v:cryptoRoll(),src:'local'};
 };
-if(!CHAT_ONLY) roFill();
 /* ---------- Firebase backend ---------- */
 let rt=null;
 function makeDb(){
