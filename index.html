@@ -167,6 +167,9 @@ select:disabled{color:var(--muted);opacity:.7}
 .code{font-family:var(--font-display);font-size:34px;letter-spacing:.14em;line-height:1}
 .plist{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
 .plist li{display:flex;gap:8px;align-items:center;font-size:14px}
+.plist .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.plist .kick{margin-left:auto;flex:none}
+.plist .kick.confirm{background:var(--danger);color:#1a1a1a;box-shadow:none}
 .plist .tag{font-size:11px;font-weight:600;background:var(--panel-2);border-radius:999px;padding:1px 7px;color:var(--muted)}
 .legend{display:flex;flex-direction:column;gap:7px;margin:0;padding:0;list-style:none}
 .legend li{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;font-size:13px}
@@ -278,6 +281,10 @@ body.chatonly #cwPop{display:none!important}
             </div>
           </div>
           <p class="err" id="gameErr"></p>
+          <div id="gameKickBox" hidden style="display:flex;flex-direction:column;gap:8px">
+            <h2>Игроки в комнате</h2>
+            <ul class="plist" id="gamePlayers"></ul>
+          </div>
         </section>
       </div>
 
@@ -359,6 +366,9 @@ window.FIREBASE_CONFIG = {
   projectId: "mashinki12512",
   appId: ""
 };
+// Ключ random.org (необязательно). Без ключа кубик берёт числа с www.random.org напрямую.
+// Если хотите надёжнее — получите бесплатный ключ на https://api.random.org и впишите сюда.
+window.RANDOM_ORG_KEY = "";
 </script>
 <!-- ================================================================================ -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -400,7 +410,8 @@ const RING=(()=>{const r=[],L=N-1,A=CC-HW,B=CC+HW;const up=(a,b,fn)=>{for(let i=
   dn(L-1,B,c=>[B,c]); up(B+1,L,rr=>[rr,B]); dn(B-1,A,c=>[L,c]); dn(L-1,B,rr=>[rr,A]); dn(A-1,0,c=>[B,c]); dn(B-1,A+1,rr=>[rr,0]); return r;})();
 const START=[0,Q,2*Q,3*Q];
 const JUNC=sl=>(START[sl]+RL-HW)%RL;
-const SAFE=new Set([0,1,2,3].flatMap(sl=>[START[sl],JUNC(sl)]));
+const SAFE=new Set(); /* no protected cells on the ring: knocking works everywhere except the finish lanes */
+const protectedAt=(s,o,cell)=>SAFE.has(cell);
 const HOME=(()=>{const h=[[],[],[],[]];for(let k=1;k<=HL;k++){h[0].push([CC,k]);h[1].push([k,CC]);h[2].push([CC,N-1-k]);h[3].push([N-1-k,CC]);}return h;})();
 const GQ=(ARM-1)/2;
 const GARAGE=[[GQ,GQ],[GQ,N-1-GQ],[N-1-GQ,N-1-GQ],[N-1-GQ,GQ]];
@@ -439,7 +450,7 @@ function baseState(settings){
 }
 let S=baseState();
 let mode='local', setupTab='local';
-let lastSeq=-1, animating=false, busyWrite=false;
+let lastSeq=-1, animating=false, busyWrite=false, wasInRoom=false;
 let animQ=Promise.resolve(), writeQ=Promise.resolve();
 let db=null, user=null, uid=null, roomRef=null, roomCode=null, unsub=null, chatUnsub=null;
 const names={}, avatars={};
@@ -458,7 +469,24 @@ const carOptions=()=>Object.keys(CAR_TYPES_LIST).map(k=>'<option value="'+k+'">'
 let botTimer=null;
 
 /* ---------- engine ---------- */
-const slotOf=(s,pi)=>{const p=s.players[pi];return p&&p.slot!=null?p.slot:pi;};
+const slotOf=(s,pi)=>{ const p=s.players[pi]; if(!p) return pi; if(p.slot!=null) return p.slot;
+  const used=new Set(s.players.filter(x=>x.slot!=null).map(x=>x.slot)); let k=0;
+  for(let i=0;i<=pi;i++){ if(s.players[i].slot!=null) continue; while(used.has(k)) k++; if(i===pi) return k; used.add(k); }
+  return pi; };
+function freezeSlots(s){ const sl=s.players.map((p,i)=>slotOf(s,i)); s.players.forEach((p,i)=>{ p.slot=sl[i]; }); }
+function kickPlayer(s,id){
+  const pi=s.players.findIndex(p=>p.id===id); if(pi<0||id===s.host||s.status==='over') return;
+  freezeSlots(s);
+  s.kicked=(s.kicked||[]).concat([id]);
+  s.log.unshift(team(s,pi)+' исключены из комнаты');
+  if(s.status==='lobby'){ s.players.splice(pi,1); return; }
+  s.cars=s.cars.filter(c=>c.p!==pi).map(c=>Object.assign({},c,{p:c.p>pi?c.p-1:c.p}));
+  s.players.splice(pi,1); s.skip.splice(pi,1);
+  s.events=[{t:'reset'}];
+  if(s.players.length<2){ s.status='over'; s.winner=0; s.phase='roll'; s.roll=null; s.log.unshift(team(s,0)+' побеждают — соперников не осталось'); return; }
+  if(s.cur>pi) s.cur--;
+  else if(s.cur===pi){ s.cur=s.cur%s.players.length; s.phase='roll'; s.roll=null; s.tries=0; s.swapCar=null; }
+}
 const col=(s,pi)=>COLORS[slotOf(s,pi)];
 const team=(s,pi)=>col(s,pi).name;
 const say=(s,t)=>s.events.push({t:'msg',text:t});
@@ -474,16 +502,17 @@ function carLabel(s,ci){const c=s.cars[ci]; const k=s.cars.filter((x,i)=>x.p===c
 function canMove(s,c,v){ if(c.done) return false; if(c.dist===0&&s.settings.exit==='six'&&v!==6) return false; return true; }
 
 function startMatch(s){
+  freezeSlots(s);
   if(s.settings.randomEach) s.settings.special=randomField();
   s.cars=[]; s.players.forEach((p,pi)=>{for(let k=0;k<s.settings.carsPer;k++) s.cars.push({p:pi,dist:0,light:false,done:false});});
   s.skip=s.players.map(()=>0); s.cur=0; s.phase='roll'; s.roll=null; s.winner=null; s.status='play'; s.tries=0;
   s.log=['Старт! '+s.settings.carsPer+' '+plural(s.settings.carsPer,'машина','машины','машин')+' у каждого, '+s.settings.laps+' '+plural(s.settings.laps,'круг','круга','кругов')+'.'];
   s.events=[{t:'reset'}];
 }
-function doRoll(s,v){
+function doRoll(s,v,src){
   s.events.push({t:'die',v}); s.roll=v;
   const mov=s.cars.map((c,i)=>i).filter(i=>s.cars[i].p===s.cur&&canMove(s,s.cars[i],v));
-  s.log.unshift(team(s,s.cur)+': выпало '+v);
+  s.log.unshift(team(s,s.cur)+': выпало '+v+(src==='random.org'?' · random.org':''));
   if(!mov.length){
     const allIn=s.settings.exit==='six'&&s.cars.every(c=>c.p!==s.cur||c.done||c.dist===0);
     if(allIn){
@@ -506,9 +535,11 @@ function stepCar(s,ci,n){
 function bump(s,ci){
   const mode=s.settings.knock||'garage'; if(mode==='off') return;
   const c=s.cars[ci], w=where(s,c); if(w.k!=='ring'||SAFE.has(w.i)) return;
+  const victims=s.cars.filter(o=>o!==c&&o.p!==c.p&&!o.done&&where(s,o).k==='ring'&&where(s,o).i===w.i&&!protectedAt(s,o,w.i)).length;
+  if(!victims) return;
   s.cars.forEach((o,oi)=>{
     if(o.p===c.p||o.done) return; const ow=where(s,o);
-    if(ow.k==='ring'&&ow.i===w.i){
+    if(ow.k==='ring'&&ow.i===w.i&&!protectedAt(s,o,w.i)){
       o.light=false;
       if(mode==='back3'){
         const path=[]; for(let k=0;k<3&&o.dist>1;k++){ o.dist--; path.push(o.dist); }
@@ -612,7 +643,7 @@ function botPick(s){
       else{
         const ri=(START[slotOf(s,c.p)]+nd-1)%RL, t=s.settings.special[ri];
         sc+={turbo:6,bonus:5,oil:-4,pit:-3,light:-2,camera:v===6?-5:0}[t]||0;
-        if((s.settings.knock||'garage')!=='off'&&!SAFE.has(ri)&&s.cars.some(o=>{ if(o.p===c.p||o.done) return false; const w=where(s,o); return w.k==='ring'&&w.i===ri; })) sc+=3;
+        if((s.settings.knock||'garage')!=='off'&&!SAFE.has(ri)&&s.cars.some(o=>{ if(o.p===c.p||o.done) return false; const w=where(s,o); return w.k==='ring'&&w.i===ri&&!protectedAt(s,o,ri); })) sc+=3;
         if(c.dist===0) sc+=(s.settings.exit==='six'?6:3);
         sc+=nd*0.03;
       }
@@ -648,6 +679,12 @@ function receive(raw){
   const prev=lastSeq; lastSeq=s.seq;
   const canAnim=prev>=0&&s.seq===prev+1&&s.events&&s.events.length&&s.status!=='lobby'&&cars3d.length===s.cars.length;
   S=s;
+  if(mode==='online'){
+    const inRoom=s.players.some(p=>p.id===uid);
+    if(inRoom) wasInRoom=true;
+    else if(wasInRoom){ wasInRoom=false; const kicked=(s.kicked||[]).includes(uid);
+      setTimeout(()=>{ exitOnline(); $('onlineErr').textContent=kicked?'Хозяин исключил вас из комнаты.':'Вы больше не в этой комнате.'; },0); return; }
+  }
   if(mode==='online') refreshNames();
   animQ=animQ.then(async()=>{
     animating=true; updateDock();
@@ -663,7 +700,21 @@ function myTurn(fromBot){
   if(mode==='local') return fromBot?!!p.bot:!p.bot;
   return p.id===uid;
 }
-function actRoll(fromBot){ if(!myTurn(fromBot)||S.phase!=='roll') return; const v=1+Math.floor(Math.random()*6); commit(s=>doRoll(s,v)); }
+function cryptoRoll(){
+  try{ const a=new Uint32Array(1); let x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=4294967292); return 1+(x%6); }
+  catch(e){ return 1+Math.floor(Math.random()*6); }
+}
+let getRoll=async()=>({v:cryptoRoll(),src:'local'});
+let rollingNow=false;
+async function actRoll(fromBot){
+  if(!myTurn(fromBot)||S.phase!=='roll'||rollingNow) return;
+  rollingNow=true; $('rollBtn').disabled=true;
+  let r; try{ r=await getRoll(); }catch(e){ r=null; }
+  if(!r||!(r.v>=1&&r.v<=6)) r={v:cryptoRoll(),src:'local'};
+  rollingNow=false;
+  if(!myTurn(fromBot)||S.phase!=='roll'){ updateDock(); return; }
+  commit(s=>doRoll(s,r.v,r.src));
+}
 function actChoose(ci,fromBot){
   if(!myTurn(fromBot)||S.phase!=='choose') return;
   const c=S.cars[ci]; if(!c||c.p!==S.cur||!canMove(S,c,S.roll)) return;
@@ -1189,7 +1240,7 @@ function renderSettings(){
   $('editNote').textContent=ed?'Нажмите на клетку трассы, чтобы выбрать её тип, или заполните трассу кнопкой. Стартовые клетки не меняются.':'Трассу и правила настраивает хозяин комнаты.';
   const counts={}; Object.values(st.special).forEach(t=>counts[t]=(counts[t]||0)+1);
   $('legend').innerHTML=TYPE_KEYS.map(k=>'<li><i style="background:'+TYPES[k].bg+'"></i><span><b>'+TYPES[k].name+'</b> — '+TYPES[k].rule+'</span><span class="n">'+(counts[k]||0)+'</span></li>').join('')+
-    ((st.knock||'garage')==='off'?'':'<li><i style="background:'+PLAIN_BG+'"></i><span><b>Сбивание</b> — встал на клетку с машиной соперника, и она '+((st.knock||'garage')==='back3'?'откатывается на 3 клетки назад':'возвращается к себе в гараж')+'. Нельзя сбить на стартовых клетках и на клетках съезда к финишу.</span><span class="n"></span></li>');
+    ((st.knock||'garage')==='off'?'':'<li><i style="background:'+PLAIN_BG+'"></i><span><b>Сбивание</b> — встал на клетку с машиной соперника, и она '+((st.knock||'garage')==='back3'?'откатывается на 3 клетки назад':'возвращается к себе в гараж')+'. Сбивать можно на любой клетке трассы, кроме финишных дорожек.</span><span class="n"></span></li>');
   $('legendPopList').innerHTML=$('legend').innerHTML;
 }
 function renderSetup(){
@@ -1225,13 +1276,34 @@ function renderLobby(){
   S.players.forEach((p,i)=>{
     const li=document.createElement('li');
     li.innerHTML='<span class="sw" style="background:'+col(S,i).hex+'"></span><span class="nm"></span>'+(p.id===S.host?'<span class="tag">хозяин</span>':'');
+    if(S.host===uid&&p.id!==uid) li.appendChild(kickButton(p.id));
     li.querySelector('.nm').textContent=pName(i)+' · '+team(S,i)+' · '+CAR_TYPES_LIST[carTypeOf(i)]; ul.appendChild(li);
   });
   const host=S.host===uid;
   $('startOnline').hidden=!host; $('startOnline').disabled=S.players.length<2;
   $('lobbyNote').textContent=host?(S.players.length<2?'Нужен хотя бы ещё один игрок.':'Все на месте? Жмите «Старт».'):'Хозяин комнаты настраивает трассу и начинает гонку.';
 }
+function kickButton(id){
+  const b=document.createElement('button'); b.type='button'; b.className='btn light small kick'; b.textContent='Исключить';
+  let t=null;
+  b.onclick=()=>{
+    if(b.classList.contains('confirm')){ clearTimeout(t); actKick(id); return; }
+    b.classList.add('confirm'); b.textContent='Точно?'; t=setTimeout(()=>{ b.classList.remove('confirm'); b.textContent='Исключить'; },3000);
+  };
+  return b;
+}
+function actKick(id){
+  if(mode!=='online'||S.host!==uid||id===uid) return;
+  if(S.status==='over'){ $('gameErr').textContent='Исключать можно в лобби или во время гонки.'; return; }
+  commit(s=>kickPlayer(s,id));
+}
 function renderGame(){
+  const kb=$('gameKickBox'), showKick=mode==='online'&&S.host===uid&&S.status==='play'&&S.players.length>1;
+  kb.hidden=!showKick;
+  if(showKick){ const ul=$('gamePlayers'); ul.innerHTML='';
+    S.players.forEach((p,i)=>{ if(p.id===uid) return; const li=document.createElement('li');
+      li.innerHTML='<span class="sw" style="background:'+col(S,i).hex+'"></span><span class="nm"></span>';
+      li.querySelector('.nm').textContent=pName(i)+' · '+team(S,i); li.appendChild(kickButton(p.id)); ul.appendChild(li); }); }
   $('log').innerHTML=S.log.map(t=>'<li>'+esc(t)+'</li>').join('');
   $('toMenu').textContent=mode==='online'?'Выйти из комнаты':'В меню';
   const cp=S.players[S.cur];
@@ -1282,6 +1354,7 @@ async function joinRoom(codeIn,silent){
     if(!sn.exists){ if(!silent) $('onlineErr').textContent='Комната '+code+' не найдена.'; throw 0; }
     const d=sn.data();
     if(!(d.players||[]).some(p=>p.id===uid)){
+      if((d.kicked||[]).includes(uid)){ if(!silent) $('onlineErr').textContent='Хозяин исключил вас из этой комнаты.'; throw 0; }
       if(d.status!=='lobby'){ if(!silent) $('onlineErr').textContent='В этой комнате гонка уже идёт.'; throw 0; }
       if(d.players.length>=4){ if(!silent) $('onlineErr').textContent='Комната заполнена: уже 4 игрока.'; throw 0; }
       const res=await ref.mutate(o=>{ if(o.status==='lobby'&&o.players.length<4&&!o.players.some(p=>p.id===uid)){ o.players.push({id:uid,bot:false,name:myName}); o.seq=(o.seq||0)+1; } return o; });
@@ -1296,7 +1369,7 @@ async function joinRoom(codeIn,silent){
 }
 function enterRoom(code,ref){
   clearTimeout(botTimer);
-  mode='online'; roomCode=code; roomRef=ref; lastSeq=-1; chatDocs={};
+  mode='online'; roomCode=code; roomRef=ref; lastSeq=-1; chatDocs={}; wasInRoom=false;
   try{ localStorage.setItem('mashinki-room',code); }catch(e){}
   if(unsub) unsub();
   unsub=ref.onSnapshot(sn=>{
@@ -1492,6 +1565,38 @@ $('cwPop').onclick=()=>{
 };
 function selectCode(){ const r=document.createRange(); r.selectNodeContents($('roomCode')); const s=getSelection(); s.removeAllRanges(); s.addRange(r); }
 
+/* ---------- random.org dice ---------- */
+const RO={buf:[],busy:null,fail:0,until:0};
+function roFill(){
+  if(RO.busy) return RO.busy;
+  RO.busy=(async()=>{
+    const ctl=new AbortController(), timer=setTimeout(()=>ctl.abort(),3500);
+    try{
+      let nums=[];
+      const key=(window.RANDOM_ORG_KEY||'').trim();
+      if(key){
+        const r=await fetch('https://api.random.org/json-rpc/4/invoke',{method:'POST',headers:{'Content-Type':'application/json'},signal:ctl.signal,
+          body:JSON.stringify({jsonrpc:'2.0',method:'generateIntegers',params:{apiKey:key,n:30,min:1,max:6,replacement:true},id:Date.now()})});
+        const j=await r.json(); nums=(j&&j.result&&j.result.random&&j.result.random.data)||[];
+      } else {
+        const r=await fetch('https://www.random.org/integers/?num=30&min=1&max=6&col=1&base=10&format=plain&rnd=new',{signal:ctl.signal,cache:'no-store'});
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        nums=(await r.text()).trim().split(/\s+/).map(Number);
+      }
+      nums=nums.filter(x=>Number.isInteger(x)&&x>=1&&x<=6);
+      if(!nums.length) throw new Error('empty');
+      RO.buf.push(...nums); RO.fail=0;
+    }catch(e){ RO.fail++; RO.until=Date.now()+Math.min(600000,15000*RO.fail); console.warn('random.org недоступен, кубик бросает встроенный генератор',e); }
+    finally{ clearTimeout(timer); RO.busy=null; }
+  })();
+  return RO.busy;
+}
+getRoll=async()=>{
+  if(!RO.buf.length&&Date.now()>=RO.until) await roFill();
+  if(RO.buf.length){ const v=RO.buf.shift(); if(RO.buf.length<8&&Date.now()>=RO.until) roFill(); return {v,src:'random.org'}; }
+  return {v:cryptoRoll(),src:'local'};
+};
+if(!CHAT_ONLY) roFill();
 /* ---------- Firebase backend ---------- */
 let rt=null;
 function makeDb(){
