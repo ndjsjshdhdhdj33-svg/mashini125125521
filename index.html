@@ -85,6 +85,22 @@ header p{margin:0;color:var(--muted)}
 @keyframes fxFall{from{transform:translate3d(0,0,0)}to{transform:translate3d(80px,calc(100% + 20px),0)}}
 @keyframes fxSpin{to{transform:rotate(360deg)}}
 .noanim .bgfx i,.noanim .bgfx i::before{animation-play-state:paused}
+.honk{position:absolute;z-index:5;pointer-events:none;font-weight:800;font-size:14px;color:#fff;background:var(--c);padding:3px 9px;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,.35);text-shadow:0 1px 2px rgba(0,0,0,.4);animation:honkUp 1s ease-out forwards}
+@keyframes honkUp{0%{opacity:0;transform:translate(-50%,-60%) scale(.6)}15%{opacity:1;transform:translate(-50%,-100%) scale(1.12)}100%{opacity:0;transform:translate(-50%,-230%) scale(1)}}
+.phone{position:absolute;z-index:6;left:14px;top:62px;width:262px;max-width:calc(100% - 28px);padding:12px 11px 12px;border-radius:32px;background:#0f1116;border:3px solid #2c303a;box-shadow:0 18px 40px rgba(0,0,0,.55),inset 0 0 0 2px #1b1e26}
+.phone[hidden]{display:none}
+.phone .ph-top{display:flex;align-items:center;justify-content:space-between;margin:0 4px 8px;color:#cfd3dc;font-size:12px;font-weight:700}
+.phone .ph-top::before{content:'';position:absolute;left:50%;top:7px;width:70px;height:6px;margin-left:-35px;border-radius:4px;background:#23262f}
+.phone .ph-top button{border:0;background:#262a34;color:#fff;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:12px}
+.phone canvas{display:block;width:100%;height:auto;border-radius:16px;touch-action:none;cursor:pointer}
+.phone .ph-ctrl{display:flex;gap:8px;margin-top:9px}
+.phone .ph-ctrl button{flex:1;height:42px;border:0;border-radius:14px;background:#262a34;color:#fff;font-size:18px;cursor:pointer}
+.phone .ph-ctrl button:active{background:#3a3f4c}
+.phone .ph-hint{margin-top:6px;text-align:center;color:#7d8494;font-size:10.5px}
+.phone .pg-turn{margin:0 0 8px;padding:6px 8px;border-radius:10px;background:var(--accent);color:#fff;font-size:12px;font-weight:800;text-align:center;animation:pgBlink 1s ease-in-out infinite alternate}
+.phone .pg-turn[hidden]{display:none}
+@keyframes pgBlink{from{opacity:.65}to{opacity:1}}
+@media (max-width:700px){.phone{width:210px;top:56px;left:8px}}
 @keyframes moonGo{from{transform:translate3d(0,0,0)}to{transform:translate3d(calc(100% + 120px),0,0)}}
 @keyframes moonBob{from{transform:translate3d(0,0,0)}to{transform:translate3d(0,14px,0)}}
 @media screen and (prefers-reduced-motion:reduce){.moonlane{animation-duration:400s}}
@@ -268,8 +284,9 @@ body.chatonly #cwPop{display:none!important}
   </header>
   <div class="layout">
     <div class="stage" id="stage">
-      <div class="bgfx" id="bgfx"></div><div class="moonlane" id="moon" hidden><i class="moon"></i></div><canvas id="cv" aria-label="Игровое поле"></canvas>
+      <div class="phone" id="phone" hidden><div class="ph-top"><span class="ph-title">Гонки</span><button type="button" id="pgClose" aria-label="Закрыть телефон">✕</button></div><div class="pg-turn" id="pgTurn" hidden>Твой ход! Закрой телефон</div><canvas id="pgCv" width="240" height="400" aria-label="Мини-игра: гонка по трём полосам"></canvas><div class="ph-ctrl"><button type="button" id="pgL" aria-label="Влево">◀</button><button type="button" id="pgR" aria-label="Вправо">▶</button></div><div class="ph-hint">← → или A / D · тап слева / справа</div></div><div class="bgfx" id="bgfx"></div><div class="moonlane" id="moon" hidden><i class="moon"></i></div><canvas id="cv" aria-label="Игровое поле"></canvas>
       <div class="tlbar">
+      <button class="ovbtn" id="phoneBtn" type="button" title="Мини-игра, пока ждёте ход">📱 Игра</button>
       <button class="ovbtn" id="gearBtn" type="button" aria-expanded="false" aria-controls="drawer" aria-label="Настройки"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Настройки</span></button>
       <button class="ovbtn" id="camBtn" type="button" aria-label="Сбросить камеру"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></svg><span>Сбросить камеру</span></button>
       <button class="ovbtn" id="zoomIn" type="button" aria-label="Приблизить" title="Приблизить"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
@@ -374,6 +391,9 @@ body.chatonly #cwPop{display:none!important}
           <div class="grid3">
             <label class="f" for="optCars">Машин у игрока
               <select id="optCars"><option>1</option><option>2</option><option>3</option><option>4</option></select>
+            </label>
+            <label class="f" for="optMode">Режим
+              <select id="optMode"><option value="classic">обычный — случайные клетки</option><option value="choice">с выбором — Арсенал и Подлянка</option></select>
             </label>
             <label class="f" for="optMap">Карта
               <select id="optMap"><option value="5">обычная — 5 клеток</option><option value="6">увеличенная — 6 клеток</option></select>
@@ -491,9 +511,14 @@ const TYPES={
   /* note: finishing needs an exact roll */
   light:{name:'Светофор',rule:'дальше эта машина едет только с 4, 5 или 6',bg:'#23263a'},
   camera:{name:'Камера',rule:'въехал с шестёркой — штраф 3 назад',bg:'#d65a52'},
-  swap:{name:'Обмен',rule:'меняешься местами со случайной машиной соперника на трассе',bg:'#3f9d5d'}
+  swap:{name:'Обмен',rule:'меняешься местами со случайной машиной соперника на трассе',bg:'#3f9d5d'},
+  curse:{name:'Подлянка',rule:'выбираешь соперника — ему прилетает случайный дебаф',bg:'#8a3fd1'},
+  buff:{name:'Арсенал',rule:'выбираешь себе один из трёх случайных бафов',bg:'#e0a020'}
 };
 const TYPE_KEYS=Object.keys(TYPES);
+const CHOICE_TYPES=['curse','buff'];
+const modeOf=s=>(s&&s.settings&&s.settings.mode)==='choice'?'choice':'classic';
+const typesFor=m=>TYPE_KEYS.filter(k=>m==='choice'||!CHOICE_TYPES.includes(k));
 const PLAIN_BG='#575b6d';
 const FACES={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
 
@@ -521,14 +546,14 @@ setArm(5);
 const isStart=i=>START.includes(i);
 
 /* ---------- field presets ---------- */
-function classicField(){
-  const order=['chaos','chaos','light','chaos','camera','swap','chaos','pit','camera','chaos','chaos','swap'], sp={};
+function classicField(m){
+  const order=m==='choice'?['chaos','curse','light','buff','camera','swap','chaos','pit','camera','curse','buff','swap']:['chaos','chaos','light','chaos','camera','swap','chaos','pit','camera','chaos','chaos','swap'], sp={};
   for(let q=0;q<4;q++) [3,7,10].forEach((o,j)=>{ sp[q*Q+o]=order[q*3+j]; });
   return sp;
 }
-function randomField(){
+function randomField(m){
   const sp={};
-  const W={chaos:6,light:2,camera:2,pit:1.5,swap:1.5}, keys=Object.keys(W), tot=keys.reduce((a,k)=>a+W[k],0);
+  const W=m==='choice'?{chaos:6,light:2,camera:2,pit:1.5,swap:1.5,curse:2,buff:2}:{chaos:6,light:2,camera:2,pit:1.5,swap:1.5}, keys=Object.keys(W), tot=keys.reduce((a,k)=>a+W[k],0);
   const pick=()=>{ let r=Math.random()*tot; for(const k of keys){ r-=W[k]; if(r<=0) return k; } return keys[0]; };
   const banned=new Set([0,1,2,3].flatMap(sl=>[START[sl],(START[sl]+1)%RL,JUNC(sl)]));
   for(let i=0;i<RL;i++){
@@ -539,7 +564,7 @@ function randomField(){
 }
 
 /* ---------- state ---------- */
-function defaultSettings(){ return {arm:5,carsPer:2,laps:1,exit:'six',knock:'garage',afk:30,randomEach:true,special:randomField()}; }
+function defaultSettings(){ return {mode:'classic',arm:5,carsPer:2,laps:1,exit:'six',knock:'garage',afk:30,randomEach:true,special:randomField()}; }
 function baseState(settings){
   return {v:2,status:'lobby',seq:0,host:null,settings:settings||defaultSettings(),
     players:[],cars:[],skip:[],cur:0,phase:'roll',roll:null,events:[],log:[],winner:null};
@@ -610,7 +635,10 @@ function carLabel(s,ci){const c=s.cars[ci]; const k=s.cars.filter((x,i)=>x.p===c
 function canMove(s,c,v){
   if(c.done) return false;
   if(c.dist===0) return !(s.settings.exit==='six'&&v!==6)||!!c.repair;
-  if((c.light||c.police)&&v<4) return true;   /* red light / police: the car may "try" and stay */
+  if(c.light||c.police) return true;          /* red light / police: the car may always "try" (stay, or get released) */
+  return moveFits(s,c,v);
+}
+function moveFits(s,c,v){
   const n=effSteps(s,c.p,v); if(n<0) return true;
   const nd=c.dist+n, goal=goalFor(s,c);
   if(nd>goal) return false;                   /* finishing needs the exact number */
@@ -623,7 +651,8 @@ function effSteps(s,p,v){ const f=(s.fx||[])[p]||{}; let n=v; if(f.nitro) n*=2; 
 
 function startMatch(s){
   freezeSlots(s);
-  if(s.settings.randomEach) s.settings.special=randomField();
+  if(s.settings.randomEach) s.settings.special=randomField(modeOf(s));
+  if(modeOf(s)!=='choice') Object.keys(s.settings.special).forEach(k=>{ if(CHOICE_TYPES.includes(s.settings.special[k])) delete s.settings.special[k]; });
   s.cars=[]; s.players.forEach((p,pi)=>{for(let k=0;k<s.settings.carsPer;k++) s.cars.push({p:pi,dist:0,light:false,done:false,shield:0,police:false,repair:false});});
   s.skip=s.players.map(()=>0); s.fx=s.players.map(()=>({})); s.bombs=[]; s.dice=null; s.cur=0; s.phase='roll'; s.roll=null; s.winner=null; s.status='play'; s.tries=0; s.places=[]; s.loser=null;
   s.log=['Старт! '+s.settings.carsPer+' '+plural(s.settings.carsPer,'машина','машины','машин')+' у каждого, '+s.settings.laps+' '+plural(s.settings.laps,'круг','круга','кругов')+'.'];
@@ -644,6 +673,7 @@ function afterRoll(s,v,src,picked){
   const mov=s.cars.map((c,i)=>i).filter(i=>s.cars[i].p===s.cur&&canMove(s,s.cars[i],v));
   s.log.unshift(team(s,s.cur)+': выпало '+v+(src==='random.org'?' · random.org':''));
   if(!mov.length){
+    { const f=fxOf(s,s.cur); if(f.nitro||f.half||f.rev){ f.nitro=false; f.half=false; f.rev=false; s.log.unshift(team(s,s.cur)+': эффект хода сгорел — ходить нечем'); } }
     const allIn=s.settings.exit==='six'&&s.cars.every(c=>c.p!==s.cur||c.done||c.dist===0);
     if(allIn){
       s.tries=(s.tries||0)+1;
@@ -732,10 +762,12 @@ function doMove(s,ci){
     c.light=false;
     if(v<4){ s.log.unshift(nm+' у светофора: красный, стоит'); say(s,'Красный свет: для '+nm+' нужно 4+, машина стоит.'); return endTurn(s,false); }
     s.log.unshift(nm+': зелёный, поехали');
+    if(c.dist>0&&!moveFits(s,c,v)){ say(s,'Зелёный, но '+nm+' на '+v+' ехать некуда — стоит.'); return endTurn(s,false); }
   }
   if(c.police){
     if(v<4){ s.log.unshift(nm+': полиция держит, нужно 4+'); say(s,'Полиция: '+nm+' стоит, пока не выпадет 4, 5 или 6.'); return endTurn(s,false); }
-    c.police=false; s.log.unshift(nm+' отпущена полицией'); }
+    c.police=false; s.log.unshift(nm+' отпущена полицией');
+    if(!moveFits(s,c,v)){ say(s,nm+' отпущена полицией, но на '+v+' ехать некуда — стоит.'); return endTurn(s,false); } }
   if(c.dist===0&&s.settings.exit==='six'){
     if(v!==6&&c.repair){ c.repair=false; s.log.unshift(nm+': ремкомплект — выезд без шестёрки'); }
     say(s,nm+' выезжает из гаража на старт.'); s.log.unshift(nm+' выезжает на старт');
@@ -757,6 +789,16 @@ function doMove(s,ci){
     }
     else if(t==='pit'){ s.skip[c.p]=1; s.log.unshift(team(s,c.p)+' заехали на пит-стоп'); say(s,'Пит-стоп: '+team(s,c.p)+' пропускают следующий ход.'); }
     else if(t==='light'){ c.light=true; s.log.unshift(nm+' встала у светофора'); say(s,'Светофор: в следующий раз '+nm+' поедет только с 4, 5 или 6.'); }
+    else if(t==='buff'){
+      const pool=BUFF_KEYS.slice(), opts=[]; while(opts.length<3&&pool.length) opts.push(pool.splice(rnd(pool.length),1)[0]);
+      s.buffOpts=opts; s.buffCar=ci; s.phase='buff'; s.log.unshift(nm+' в «Арсенале»: выбирают баф'); say(s,'Арсенал! '+team(s,c.p)+' выбирают баф: '+opts.map(k=>SURPRISES[k][0]).join(', ')+'.'); return;
+    }
+    else if(t==='curse'){
+      const opp=curseTargets(s);
+      if(!opp.length) say(s,'Подлянка: отправить дебаф некому.');
+      else if(opp.length===1) applyCurse(s,opp[0]);
+      else { s.phase='curse'; s.log.unshift(nm+' на «Подлянке»: выбирают, кому отправить дебаф'); say(s,'Подлянка! '+team(s,c.p)+' выбирают соперника, которому прилетит дебаф.'); return; }
+    }
     else if(t==='swap'){
       const tg=swapTargets(s,ci);
       if(tg.length){ swapCars(s,ci,tg[rnd(tg.length)]); }
@@ -778,16 +820,17 @@ const SURPRISES={
   puddle:['Лужа','следующий ход — половина выпавшего'], flat:['Прокол','пропуск хода'], reverse:['Задний ход','следующий ход назад'],
   fog:['Туман','следующий бросок только 1–3'], police:['Полиция','машина стоит, пока не выпадет 4, 5 или 6'], hole:['Чёрная дыра','машина улетает на старт'],
   bomb:['Бомба','через 2 своих хода взрывается и отправляет в гараж всех на этой и соседних клетках'], casino:['Казино','1–3: −3 клетки, 4–6: +6'],
+  tpswap:['Телепорт','меняешься местами с любой машиной соперника на выбор'],
   duel:['Дуэль','ты и случайный соперник бросаете кубик, проигравший откатывается на 3'], pitplus:['Пит-стоп+','пропуск хода, потом 2 хода со щитом']
 };
-const SURPRISE_KEYS=Object.keys(SURPRISES);
+const SURPRISE_KEYS=Object.keys(SURPRISES).filter(k=>k!=='tpswap');
 function firstAhead(s,ci,max){ const c=s.cars[ci], w=where(s,c); if(w.k!=='ring') return null;
   for(let k=1;k<=max;k++){ const cell=(w.i+k)%RL; const oi=s.cars.findIndex(o=>o.p!==c.p&&!o.done&&!(o.shield>0)&&where(s,o).k==='ring'&&where(s,o).i===cell); if(oi>=0) return {oi,k}; }
   return null; }
 function toGarage(s,oi){ const o=s.cars[oi]; o.dist=0; o.light=false; o.police=false; s.events.push({t:'knock',car:oi,to:0}); }
-function surprise(s,ci){
-  const c=s.cars[ci], nm=carLabel(s,ci), f=fxOf(s,c.p), key=SURPRISE_KEYS[rnd(SURPRISE_KEYS.length)], nmE=SURPRISES[key][0];
-  const tell=t=>{ s.log.unshift(nm+' · Сюрприз «'+nmE+'»'); say(s,'Сюрприз — '+nmE+'! '+t); };
+function surprise(s,ci,forced){
+  const c=s.cars[ci], nm=carLabel(s,ci), f=fxOf(s,c.p), key=forced||SURPRISE_KEYS[rnd(SURPRISE_KEYS.length)], nmE=SURPRISES[key][0];
+  const tell=t=>{ s.log.unshift(nm+(forced?' · Арсенал: «':' · Сюрприз «')+nmE+'»'); say(s,(forced?'Арсенал — ':'Сюрприз — ')+nmE+'! '+t); };
   const go=k=>{ if(stepCar(s,ci,k)) return 'fin'; if(c.dist>ringEnd(s)&&settleLane(s,ci)) return 'fin'; bump(s,ci); return ''; };
   if(key==='shift'){ const opts=[-5,-4,-3,-2,-1,1,2,3,4,5], k=opts[rnd(opts.length)]; tell(nm+(k>0?' уезжает вперёд на ':' откатывается назад на ')+Math.abs(k)+'.'); return go(k); }
   if(key==='nitro'){ f.nitro=true; tell('Следующий ход '+team(s,c.p)+' — на двойное число.'); return ''; }
@@ -819,6 +862,34 @@ function surprise(s,ci){
   if(key==='pitplus'){ s.skip[c.p]=Math.max(1,s.skip[c.p]||0); s.cars.forEach(o=>{ if(o.p===c.p&&!o.done) o.shield=3; }); tell(team(s,c.p)+' пропускают ход, зато потом 2 хода все их машины под щитом.'); return ''; }
   return '';
 }
+const CURSES={puddle:['Лужа','следующий ход — половина выпавшего'],flat:['Прокол','пропуск хода'],reverse:['Задний ход','следующий ход назад'],fog:['Туман','следующий бросок только 1–3'],police:['Полиция','лидирующая машина стоит, пока не выпадет 4+'],hole:['Чёрная дыра','лидирующая машина улетает на старт']};
+const CURSE_KEYS=Object.keys(CURSES);
+const BUFF_KEYS=['nitro','shield','dice2','magnet','rocket','shortcut','repair','tpswap'];
+function doBuff(s,key){ const ci=s.buffCar, opts=s.buffOpts||[]; s.buffOpts=null; s.buffCar=null; if(!opts.includes(key)) key=opts[0]; if(ci==null||!key) return endTurn(s,false);
+  if(key==='tpswap'){ const tg=swapTargets(s,ci); s.log.unshift(carLabel(s,ci)+' · Арсенал: «Телепорт»');
+    if(!tg.length){ say(s,'Телепорт: на трассе нет машин соперников, с которыми можно поменяться.'); return endTurn(s,false); }
+    s.swapCar=ci; s.phase='swap'; say(s,'Телепорт! Выберите машину соперника, с которой поменяться местами.'); return; }
+  const r=surprise(s,ci,key); if(r==='fin') return finishCar(s,ci); endTurn(s,false); }
+function botBuff(s){ const opts=s.buffOpts||[], ci=s.buffCar; const has=k=>opts.includes(k); const tgt=ci!=null?firstAhead(s,ci,6):null;
+  const sw=ci!=null&&has('tpswap')&&botSwapGain(s,ci)>6;
+  for(const k of [tgt?'rocket':'', sw?'tpswap':'', 'shortcut','nitro','dice2','shield',tgt&&tgt.k>1?'magnet':'','repair']) if(k&&has(k)) return k; return opts[0]; }
+function curseTargets(s){ return s.players.map((p,i)=>i).filter(i=>i!==s.cur&&!(s.places||[]).includes(i)); }
+function applyCurse(s,tp){
+  const key=CURSE_KEYS[rnd(CURSE_KEYS.length)], nmE=CURSES[key][0], f=fxOf(s,tp), from=team(s,s.cur), to=team(s,tp);
+  const lead=s.cars.map((c,i)=>i).filter(i=>s.cars[i].p===tp&&!s.cars[i].done&&where(s,s.cars[i]).k==='ring').sort((a,b)=>s.cars[b].dist-s.cars[a].dist)[0];
+  let txt;
+  if(key==='puddle'){ f.half=true; txt='следующий ход только на половину выпавшего'; }
+  else if(key==='flat'){ s.skip[tp]=Math.max(1,s.skip[tp]||0); txt='пропускают следующий ход'; }
+  else if(key==='reverse'){ f.rev=true; txt='следующий ход поедут задним ходом'; }
+  else if(key==='fog'){ f.fog=true; txt='следующий бросок только 1, 2 или 3'; }
+  else if(lead==null){ f.fog=true; txt='на трассе нет их машин, поэтому — туман: следующий бросок только 1–3'; }
+  else if(s.cars[lead].shield>0){ txt=carLabel(s,lead)+' под щитом — дебаф не прошёл'; }
+  else if(key==='police'){ s.cars[lead].police=true; s.cars[lead].light=false; txt=carLabel(s,lead)+' стоит, пока не выпадет 4, 5 или 6'; }
+  else { s.cars[lead].dist=1; s.events.push({t:'move',car:lead,path:[1]}); bump(s,lead); txt=carLabel(s,lead)+' улетает на старт'; }
+  s.log.unshift(from+' → '+to+': «'+nmE+'»'); say(s,'Подлянка от '+from+': '+to+' получают «'+nmE+'» — '+txt+'.');
+}
+function doCurse(s,tp){ const ok=curseTargets(s); if(!ok.includes(tp)) tp=botCurse(s); if(tp!=null) applyCurse(s,tp); endTurn(s,false); }
+function botCurse(s){ const ok=curseTargets(s); let best=null, bs=-1; ok.forEach(p=>{ const sc=s.cars.filter(c=>c.p===p).reduce((a,c)=>a+(c.done?200:c.dist),0)+Math.random(); if(sc>bs){ bs=sc; best=p; } }); return best; }
 function tickBombs(s){
   if(!s.bombs||!s.bombs.length) return;
   const left=[];
@@ -860,13 +931,14 @@ function doSwap(s,ti){
   say(s,carLabel(s,ci)+' и '+carLabel(s,ti)+' поменялись местами.');
   endTurn(s,false);
 }
+function botSwapGain(s,ci){ const me=s.cars[ci]; let bs=0; swapTargets(s,ci).forEach(ti=>{ const o=s.cars[ti]; const gain=(distAtCell(s,me,where(s,o).i)-me.dist)+(o.dist-distAtCell(s,o,where(s,me).i))*0.6; if(gain>bs) bs=gain; }); return bs; }
 function botSwap(s){
   const ci=s.swapCar, me=s.cars[ci]; let best=-1, bs=0;
   swapTargets(s,ci).forEach(ti=>{ const o=s.cars[ti]; const gain=(distAtCell(s,me,where(s,o).i)-me.dist)+(o.dist-distAtCell(s,o,where(s,me).i))*0.6; if(gain>bs){ bs=gain; best=ti; } });
   return best;
 }
 function endTurn(s,extra){
-  s.phase='roll'; s.roll=null; s.tries=0; s.swapCar=null; s.dice=null;
+  s.phase='roll'; s.roll=null; s.tries=0; s.swapCar=null; s.dice=null; s.buffOpts=null; s.buffCar=null;
   s.cars.forEach(o=>{ if(o.p===s.cur&&o.shield>0) o.shield--; });
   if(s.sixBonus&&s.status==='play'&&!(s.places||[]).includes(s.cur)){ s.sixBonus=false; s.log.unshift(team(s,s.cur)+': шестёрка — ещё один ход'); say(s,'Выпала шестёрка — '+team(s,s.cur)+' ходят ещё раз!'); return; }
   s.sixBonus=false;
@@ -887,14 +959,14 @@ function botPick(s){
     if(c.p!==s.cur||!canMove(s,c,v)) return;
     const goal=goalFor(s,c);
     let sc=0;
-    if((c.light||c.police)&&v<4) sc=-8;
+    if((c.light||c.police)&&(v<4||!moveFits(s,c,v))) sc=-8;
     else{
       const nd=(c.dist===0&&s.settings.exit==='six')?1:c.dist===0?v:Math.max(1,c.dist+effSteps(s,c.p,v));
       if(nd>=goal) sc=100;
       else if(nd>re) sc=8;
       else{
         const ri=(START[slotOf(s,c.p)]+nd-1)%RL, t=s.settings.special[ri];
-        sc+={chaos:0.4,swap:0.5,pit:-3,light:-2,camera:v===6?-5:0}[t]||0;
+        sc+={chaos:0.4,swap:0.5,curse:2,buff:3,pit:-3,light:-2,camera:v===6?-5:0}[t]||0;
         if((s.settings.knock||'garage')!=='off'&&!SAFE.has(ri)&&s.cars.some(o=>{ if(o.p===c.p||o.done) return false; const w=where(s,o); return w.k==='ring'&&w.i===ri&&!protectedAt(s,o,ri); })) sc+=3;
         if(c.dist===0) sc+=(s.settings.exit==='six'?6:3);
         sc+=nd*0.03;
@@ -978,6 +1050,14 @@ async function actRoll(fromBot){
   if(!myTurn(fromBot)||S.phase!=='roll'){ updateDock(); return; }
   commit(s=>doRoll(s,r.v,r.src,v2));
 }
+function actBuff(k,fromBot){
+  if(!myTurn(fromBot)||S.phase!=='buff') return;
+  commit(s=>doBuff(s,k));
+}
+function actCurse(tp,fromBot){
+  if(!myTurn(fromBot)||S.phase!=='curse') return;
+  commit(s=>doCurse(s,tp));
+}
 function actPickDie(i,fromBot){
   if(!myTurn(fromBot)||S.phase!=='pickdie'||!S.dice) return;
   commit(s=>pickDie(s,i));
@@ -1014,6 +1094,12 @@ async function doAfk(){
     } else if(S.phase==='choose'){
       if(S.seq!==seq) return;
       commit(s=>{ s.log.unshift(team(s,s.cur)+': машина выбрана автоматически'); doMove(s,botPick(s)); });
+    } else if(S.phase==='buff'){
+      if(S.seq!==seq) return;
+      commit(s=>doBuff(s,botBuff(s)));
+    } else if(S.phase==='curse'){
+      if(S.seq!==seq) return;
+      commit(s=>doCurse(s,botCurse(s)));
     } else if(S.phase==='pickdie'){
       if(S.seq!==seq) return;
       commit(s=>pickDie(s,botDie(s)));
@@ -1031,7 +1117,7 @@ function scheduleBot(){
   const seq=S.seq;
   botTimer=setTimeout(()=>{
     if(S.seq!==seq||animating) return;
-    if(S.phase==='roll') actRoll(true); else if(S.phase==='pickdie') actPickDie(botDie(S),true); else if(S.phase==='swap') actSwap(botSwap(S),true); else actChoose(botPick(S),true);
+    if(S.phase==='roll') actRoll(true); else if(S.phase==='pickdie') actPickDie(botDie(S),true); else if(S.phase==='curse') actCurse(botCurse(S),true); else if(S.phase==='buff') actBuff(botBuff(S),true); else if(S.phase==='swap') actSwap(botSwap(S),true); else actChoose(botPick(S),true);
   },reduce?300:1100);
 }
 function canEditField(){ return S.status==='lobby'&&(mode==='local'||S.host===uid); }
@@ -1205,6 +1291,8 @@ function iconPaths(ctx,type){
   else if(type==='bonus'){ ctx.fillStyle='#3a2405'; ctx.fill(P2('M8 4h6l4.5 4.5V19a1.5 1.5 0 0 1-1.5 1.5H7A1.5 1.5 0 0 1 5.5 19V6.5A2.5 2.5 0 0 1 8 4z')); }
   else if(type==='light'){ [['#ff5a4e',6.5],['#ffc83d',12],['#4fd17a',17.5]].forEach(([c,y])=>{ctx.fillStyle=c;ctx.beginPath();ctx.arc(12,y,2.4,0,Math.PI*2);ctx.fill();}); }
   else if(type==='swap'){ ctx.strokeStyle='#ffffff'; ctx.lineWidth=2.4; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.stroke(P2('M5 9h12M14 5.5L17.5 9 14 12.5M19 15H7M10 11.5L6.5 15 10 18.5')); }
+  else if(type==='buff'){ ctx.fillStyle='#3a2405'; ctx.fill(P2('M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6-4.5-4.2 6.1-.7z')); }
+  else if(type==='curse'){ ctx.fillStyle='#ffffff'; ctx.fill(P2('M13.5 2.5L5.5 13.5h5l-1.5 8 8.5-11.5h-5.2z')); }
   else if(type==='camera'){ ctx.fillStyle='#ffffff'; ctx.fill(P2('M4.5 7h10a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-10a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z')); ctx.fill(P2('M16.5 10.2l5-2.4v8.4l-5-2.4z')); }
 }
 function canvasTex(c){ const t=new THREE.CanvasTexture(c); t.anisotropy=renderer.capabilities.getMaxAnisotropy(); t.encoding=THREE.sRGBEncoding; return t; }
@@ -1966,7 +2054,7 @@ function renderAll(){
   if(!sameCars) buildCars();
   disp.length=0; S.cars.forEach(c=>disp.push({p:c.p,dist:c.dist,done:c.done}));
   relayout(!sameCars);
-  updateDock(); updateSide(); renderCards(); syncMarkers();
+  updateDock(); updateSide(); renderCards(); syncMarkers(); pgTurnNote();
 }
 let markerGroup=null;
 function syncMarkers(){
@@ -2017,7 +2105,7 @@ function updateDock(){
   if(mode==='online') who=(p.id===uid?'Ваш ход':'Ходит '+pName(S.cur))+' · '+team(S,S.cur);
   else who='Ходят '+team(S,S.cur)+(p.bot?' (компьютер)':'');
   $('turnName').textContent=who;
-  $('turnSub').textContent=S.phase==='pickdie'?'Два кубика: '+(S.dice||[]).join(' и ')+' — выберите один':S.phase==='swap'?'Обмен: выберите машину соперника':S.phase==='choose'?'Выпало '+S.roll+' — выберите машину':(S.tries?'Нужна шестёрка: попытка '+(S.tries+1)+' из 3':'Бросьте кубик — можно нажать на кубик на поле')+(USES_RANDOM_ORG&&S.lastSrc?' · прошлый бросок: '+(S.lastSrc==='random.org'?'random.org':'встроенный генератор'):'');
+  $('turnSub').textContent=S.phase==='buff'?'Арсенал: выберите себе баф':S.phase==='curse'?'Подлянка: выберите, кому отправить дебаф':S.phase==='pickdie'?'Два кубика: '+(S.dice||[]).join(' и ')+' — выберите один':S.phase==='swap'?'Телепорт: выберите машину соперника, с которой поменяться':S.phase==='choose'?'Выпало '+S.roll+' — выберите машину':(S.tries?'Нужна шестёрка: попытка '+(S.tries+1)+' из 3':'Бросьте кубик — можно нажать на кубик на поле')+(USES_RANDOM_ORG&&S.lastSrc?' · прошлый бросок: '+(S.lastSrc==='random.org'?'random.org':'встроенный генератор'):'');
   if(S.phase==='choose'&&!animating) setDieStill(S.roll);
   const mine=myTurn(false);
   btn.onclick=()=>actRoll(false);
@@ -2036,6 +2124,16 @@ function updateDock(){
       b.disabled=!mine||!ok; b.onclick=()=>actChoose(i,false);
       box.appendChild(b);
     });
+  }
+  if(S.phase==='buff'&&!animating&&S.buffOpts){
+    box.hidden=false; box.innerHTML='';
+    S.buffOpts.forEach(k=>{ const b=document.createElement('button'); b.type='button'; b.style.setProperty('--carc',TYPES.buff.bg);
+      b.innerHTML='<span class="k">★</span> '+SURPRISES[k][0]+' <small>'+SURPRISES[k][1]+'</small>'; b.disabled=!mine; b.onclick=()=>actBuff(k,false); box.appendChild(b); });
+  }
+  if(S.phase==='curse'&&!animating){
+    box.hidden=false; box.innerHTML='';
+    curseTargets(S).forEach(tp=>{ const b=document.createElement('button'); b.type='button'; b.style.setProperty('--carc',col(S,tp).hex);
+      b.innerHTML='<span class="k">⚡</span> '+esc(mode==='online'?pName(tp)+' · '+team(S,tp):team(S,tp)); b.disabled=!mine; b.onclick=()=>actCurse(tp,false); box.appendChild(b); });
   }
   if(S.phase==='pickdie'&&!animating&&S.dice){
     box.hidden=false; box.innerHTML='';
@@ -2100,14 +2198,16 @@ function updateSide(){
 }
 function renderSettings(){
   const ed=canEditField(), st=S.settings;
-  $('optMap').value=String(st.arm===6?6:5); $('optCars').value=String(st.carsPer); $('optLaps').value=String(st.laps); $('optExit').value=st.exit||'any'; $('optKnock').value=st.knock||'garage'; $('optAfk').value=String(st.afk==null?0:st.afk);
-  ['optMap','optCars','optLaps','optExit','optKnock','optAfk','optRandom','edClassic','edRandom','edClear'].forEach(id=>$(id).disabled=!ed);
+  $('optMode').value=modeOf(S); $('optMap').value=String(st.arm===6?6:5); $('optCars').value=String(st.carsPer); $('optLaps').value=String(st.laps); $('optExit').value=st.exit||'any'; $('optKnock').value=st.knock||'garage'; $('optAfk').value=String(st.afk==null?0:st.afk);
+  ['optMode','optMap','optCars','optLaps','optExit','optKnock','optAfk','optRandom','edClassic','edRandom','edClear'].forEach(id=>$(id).disabled=!ed);
   $('optRandom').checked=!!st.randomEach;
   $('editNote').textContent=ed?'Нажмите на клетку трассы, чтобы выбрать её тип, или заполните трассу кнопкой. Стартовые клетки не меняются.':'Трассу и правила настраивает хозяин комнаты.';
   const counts={}; Object.values(st.special).forEach(t=>counts[t]=(counts[t]||0)+1);
-  $('legend').innerHTML=TYPE_KEYS.map(k=>'<li><i style="background:'+TYPES[k].bg+'"></i><span><b>'+TYPES[k].name+'</b> — '+TYPES[k].rule+'</span><span class="n">'+(counts[k]||0)+'</span></li>').join('')+
+  $('legend').innerHTML=typesFor(modeOf(S)).map(k=>'<li><i style="background:'+TYPES[k].bg+'"></i><span><b>'+TYPES[k].name+'</b> — '+TYPES[k].rule+'</span><span class="n">'+(counts[k]||0)+'</span></li>').join('')+
+    (modeOf(S)!=='choice'?'':'<li><i style="background:'+TYPES.curse.bg+'"></i><span><b>Дебафы «Подлянки»</b> — '+CURSE_KEYS.map(k=>'<b>'+CURSES[k][0]+'</b>: '+CURSES[k][1]).join('; ')+'. Машину под щитом полиция и чёрная дыра не берут.</span><span class="n"></span></li>')+
     '<li><i style="background:'+TYPES.chaos.bg+'"></i><span><b>Эффекты «Сюрприза»</b> — '+SURPRISE_KEYS.map(k=>'<b>'+SURPRISES[k][0]+'</b>: '+SURPRISES[k][1]).join('; ')+'.</span><span class="n"></span></li>'+
     '<li><i style="background:#2b3b86"></i><span><b>Шестёрка</b> — после хода на 6 вы ходите ещё раз</span><span class="n"></span></li>'+
+    '<li><i style="background:#f2c230"></i><span><b>Гудок</b> — кликни по своей машине, и она бибикнет (в онлайне слышат все)</span><span class="n"></span></li>'+
     ((st.knock||'garage')==='off'?'':'<li><i style="background:'+PLAIN_BG+'"></i><span><b>Сбивание</b> — встал на клетку с машиной соперника, и она '+((st.knock||'garage')==='back3'?'откатывается на 3 клетки назад':'возвращается к себе в гараж')+'. Сбивать можно на любой клетке трассы, кроме финишных дорожек.</span><span class="n"></span></li>');
   $('legendPopList').innerHTML=$('legend').innerHTML;
 }
@@ -2268,12 +2368,13 @@ function enterRoom(code,ref){
     if(!sn.exists){ $('onlineErr').textContent='Комната закрыта.'; exitOnline(); return; }
     receive(sn.data());
   },()=>{ $('gameErr').textContent='Связь с комнатой потеряна. Обновите страницу.'; $('lobbyErr').textContent=$('gameErr').textContent; });
-  startChat(code);
+  startChat(code); startHonks(code);
 }
 function forgetRoom(){ try{ localStorage.removeItem('mashinki-room'); }catch(e){} }
 function exitOnline(){
   if(unsub){ unsub(); unsub=null; }
   if(chatUnsub){ chatUnsub(); chatUnsub=null; }
+  if(honkUnsub){ honkUnsub(); honkUnsub=null; }
   forgetRoom();
   const settings=clone(S.settings);
   mode='local'; roomRef=null; roomCode=null; setupTab='online'; lastSeq=-1; chatDocs={}; chatOpen=false; unread=0; applyChat();
@@ -2318,6 +2419,62 @@ function applyChat(){
 function setChatOpen(v){ chatOpen=v||true; }
 let myMsgs=null, chatKeys=[], chatSending=false, clockOffset=0;
 const chatNow=()=>Date.now()+clockOffset;
+/* ---------- honk: click your own car ---------- */
+let audioCtx=null, honkUnsub=null, honkSeen={}, honkPrimed=false, lastHonk=0, honkN=0;
+const HONK_TONES={sport:[523,659],jeep:[294,370],pickup:[330,415],van:[392,494],formula:[784,988]};
+function honkSound(type){ try{ audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume();
+  const t0=audioCtx.currentTime, tones=HONK_TONES[type]||HONK_TONES.sport, g=audioCtx.createGain(); g.connect(audioCtx.destination);
+  [[0,0.16],[0.2,0.42]].forEach(([a,b])=>{ g.gain.setValueAtTime(0,t0+a); g.gain.linearRampToValueAtTime(0.11,t0+a+0.02); g.gain.setValueAtTime(0.11,t0+b-0.05); g.gain.linearRampToValueAtTime(0,t0+b); });
+  tones.forEach(fq=>{ const o=audioCtx.createOscillator(), lp=audioCtx.createBiquadFilter(); o.type='square'; o.frequency.value=fq; lp.type='lowpass'; lp.frequency.value=1800; o.connect(lp); lp.connect(g); o.start(t0); o.stop(t0+0.45); }); }catch(e){} }
+function honkFx(ci){ const o=cars3d[ci]; if(!o) return; o.hop=performance.now(); o.hopH=0.35; honkSound(o.type);
+  if(o.g&&camera){ const v=o.g.position.clone(); v.y+=0.7; v.project(camera); const r=cv.getBoundingClientRect(), sr=stage.getBoundingClientRect(), el=document.createElement('div');
+    el.className='honk'; el.textContent='БИП!'; el.style.left=((v.x+1)/2*r.width+r.left-sr.left)+'px'; el.style.top=((1-v.y)/2*r.height+r.top-sr.top)+'px'; el.style.setProperty('--c',o.hex); stage.appendChild(el); setTimeout(()=>el.remove(),1000); } }
+function myCar(ci){ const c=S.cars[ci]; if(!c) return false; const p=S.players[c.p]; if(!p) return false; return mode==='local'?!p.bot:p.id===uid; }
+function honk(ci){ const now=Date.now(); if(now-lastHonk<500) return; lastHonk=now; honkFx(ci);
+  if(mode==='online'&&roomCode&&db){ honkN++; try{ db.doc('rooms/'+roomCode+'/honk/'+uid).set({t:chatNow(),ci,n:honkN}).catch(()=>{}); }catch(e){} } }
+function startHonks(code){ if(honkUnsub) honkUnsub(); honkSeen={}; honkPrimed=false;
+  try{ honkUnsub=db.collection('rooms/'+code+'/honk').onSnapshot(snap=>{ snap.docs.forEach(d=>{ const v=d.data(); if(!v||d.id===uid) return; const key=v.t+':'+v.n; if(honkSeen[d.id]===key) return;
+    const fresh=honkPrimed&&Math.abs(chatNow()-v.t)<8000; honkSeen[d.id]=key; if(fresh&&typeof v.ci==='number') honkFx(v.ci); }); honkPrimed=true; },()=>{}); }catch(e){} }
+/* ---------- phone mini-game: three-lane racer to pass the time ---------- */
+const PG={open:false,run:false,over:false,lane:1,x:1,cars:[],t:0,score:0,speed:0,spawn:0,last:0,best:0,dash:0,raf:0};
+try{ PG.best=+localStorage.getItem('mashinki-phone-best')||0; }catch(e){}
+function pgCanvas(){ return document.getElementById('pgCv'); }
+function pgReset(){ Object.assign(PG,{run:true,over:false,lane:1,x:1,cars:[],t:0,score:0,speed:3.2,spawn:0.6,dash:0}); }
+function pgOpen(v){ PG.open=v; document.getElementById('phone').hidden=!v; document.getElementById('phoneBtn').classList.toggle('on',v);
+  if(v){ if(!PG.run&&!PG.over) pgReset(); PG.last=performance.now(); cancelAnimationFrame(PG.raf); PG.raf=requestAnimationFrame(pgLoop); pgTurnNote(); } else cancelAnimationFrame(PG.raf); }
+function pgMove(d){ if(!PG.open) return; if(PG.over){ pgReset(); return; } PG.lane=Math.max(0,Math.min(2,PG.lane+d)); }
+function pgTurnNote(){ const el=document.getElementById('pgTurn'); if(!el) return; const my=S.status==='play'&&myTurn(false); el.hidden=!my; }
+function pgCarShape(x,cx,cy,w,h,body,glass){ x.fillStyle='rgba(0,0,0,.25)'; x.fillRect(cx-w/2+3,cy-h/2+4,w,h);
+  x.fillStyle=body; x.beginPath(); x.roundRect?x.roundRect(cx-w/2,cy-h/2,w,h,7):x.rect(cx-w/2,cy-h/2,w,h); x.fill();
+  x.fillStyle=glass; x.fillRect(cx-w/2+5,cy-h/2+9,w-10,h*0.2); x.fillRect(cx-w/2+5,cy+h*0.18,w-10,h*0.14);
+  x.fillStyle='#111'; [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sy])=>x.fillRect(cx+sx*(w/2)-(sx>0?1:3),cy+sy*h*0.3-5,4,10)); }
+function pgLoop(t){
+  if(!PG.open) return; PG.raf=requestAnimationFrame(pgLoop);
+  const dt=Math.min(0.05,(t-PG.last)/1000); PG.last=t;
+  const cv2=pgCanvas(); if(!cv2) return; const x=cv2.getContext('2d'), W=cv2.width, H=cv2.height, LW=W/3;
+  if(PG.run&&!PG.over){
+    PG.t+=dt; PG.speed=3.2+PG.t*0.08; PG.score+=dt*PG.speed*10; PG.dash=(PG.dash+dt*PG.speed*60)%40;
+    PG.x+=(PG.lane-PG.x)*Math.min(1,dt*14);
+    PG.spawn-=dt; if(PG.spawn<=0){ const busy=new Set(PG.cars.filter(c=>c.y<90).map(c=>c.lane)); let lane=Math.floor(Math.random()*3), k=0; while(busy.has(lane)&&k++<4) lane=(lane+1)%3;
+      if(busy.size<2){ PG.cars.push({lane,y:-60,v:0.55+Math.random()*0.35,col:['#e5564c','#3f86e6','#f0bd3e','#3fbf6a','#9a6ee0','#ff8a2a','#e9edf2'][Math.floor(Math.random()*7)]}); }
+      PG.spawn=Math.max(0.32,1.05-PG.t*0.012)*(0.7+Math.random()*0.6); }
+    PG.cars.forEach(c=>{ c.y+=dt*PG.speed*60*c.v; });
+    PG.cars=PG.cars.filter(c=>c.y<H+80);
+    const px=PG.x*LW+LW/2, py=H-70;
+    if(PG.cars.some(c=>Math.abs(c.lane*LW+LW/2-px)<LW*0.62&&Math.abs(c.y-py)<52)){ PG.over=true; if(PG.score>PG.best){ PG.best=Math.floor(PG.score); try{ localStorage.setItem('mashinki-phone-best',String(PG.best)); }catch(e){} } }
+  }
+  /* draw */
+  x.fillStyle='#3d6b4c'; x.fillRect(0,0,W,H); x.fillStyle='#33363e'; x.fillRect(8,0,W-16,H);
+  x.fillStyle='#f4f4f4'; for(let y=-40+PG.dash;y<H;y+=40){ x.fillRect(4,y,6,20); x.fillRect(W-10,y,6,20); } x.fillStyle='#d8352e'; for(let y=-20+PG.dash;y<H;y+=40){ x.fillRect(4,y,6,20); x.fillRect(W-10,y,6,20); }
+  x.fillStyle='rgba(255,255,255,.55)'; for(let k=1;k<3;k++) for(let y=-40+PG.dash;y<H;y+=40) x.fillRect(k*LW-2,y,4,22);
+  PG.cars.forEach(c=>pgCarShape(x,c.lane*LW+LW/2,c.y,LW*0.56,62,c.col,'#2a3442'));
+  const me=S.status!=='lobby'&&S.players.length?col(S,Math.max(0,S.players.findIndex(p=>mode==='local'?!p.bot:p.id===uid))).hex:'#ee4f9b';
+  pgCarShape(x,PG.x*LW+LW/2,H-70,LW*0.56,62,me,'#9fe8ff');
+  x.fillStyle='rgba(0,0,0,.45)'; x.fillRect(0,0,W,30); x.fillStyle='#fff'; x.font='bold 15px "Russo One",sans-serif'; x.textBaseline='middle';
+  x.textAlign='left'; x.fillText(Math.floor(PG.score)+' м',10,15); x.textAlign='right'; x.fillText('рекорд '+PG.best,W-10,15);
+  if(PG.over){ x.fillStyle='rgba(10,12,20,.72)'; x.fillRect(0,0,W,H); x.fillStyle='#fff'; x.textAlign='center'; x.font='bold 26px "Russo One",sans-serif'; x.fillText('АВАРИЯ!',W/2,H/2-40);
+    x.font='bold 17px "Russo One",sans-serif'; x.fillText(Math.floor(PG.score)+' м',W/2,H/2); x.font='13px sans-serif'; x.fillText(Math.floor(PG.score)>=PG.best&&PG.best>0?'Новый рекорд!':'Рекорд: '+PG.best+' м',W/2,H/2+26); x.fillText('Нажми, чтобы ещё раз',W/2,H/2+56); }
+}
 function startChat(code){
   if(chatUnsub) chatUnsub();
   chatPrimed=false; lastSeenT=0; unread=0; myMsgs=null; chatKeys=[]; chatDocs={};
@@ -2388,7 +2545,8 @@ cv.addEventListener('pointermove',e=>{
   const overDie=raycaster.intersectObject(die3d,false).length>0;
   const sel=selectableSet();
   const overCar=!overDie&&sel.size>0&&raycaster.intersectObjects(cars3d.map(o=>o.g).filter(Boolean),true).some(h=>sel.has(h.object.userData.ci));
-  cv.style.cursor=overDie||overCar?'pointer':'';
+  const overOwn=!overDie&&!overCar&&S.status!=='lobby'&&raycaster.intersectObjects(cars3d.map(o=>o.g).filter(Boolean),true).some(h=>h.object.userData.ci!=null&&myCar(h.object.userData.ci));
+  cv.style.cursor=overDie||overCar||overOwn?'pointer':'';
 });
 cv.addEventListener('pointerup',e=>{
   if(!downXY||!ok3d) return; const moved=Math.hypot(e.clientX-downXY[0],e.clientY-downXY[1]); downXY=null;
@@ -2401,6 +2559,8 @@ cv.addEventListener('pointerup',e=>{
     const hits=raycaster.intersectObjects(cars3d.map(o=>o.g).filter(Boolean),true);
     for(const h of hits){ const ci=h.object.userData.ci; if(sel.has(ci)){ if(S.phase==='swap') actSwap(ci,false); else actChoose(ci,false); return; } }
   }
+  if(S.status!=='lobby'){ const hits=raycaster.intersectObjects(cars3d.map(o=>o.g).filter(Boolean),true);
+    for(const h of hits){ const ci=h.object.userData.ci; if(ci!=null&&myCar(ci)){ honk(ci); return; } } }
   if(canEditField()){
     const hit=raycaster.intersectObjects(tiles,false)[0];
     if(hit&&hit.object.userData.ring&&!isStart(hit.object.userData.idx)) openPalette(hit.object.userData.idx,e.clientX,e.clientY); else closePalette();
@@ -2409,7 +2569,7 @@ cv.addEventListener('pointerup',e=>{
 function openPalette(idx,x,y){
   palIdx=idx; const p=$('palette'), cur=S.settings.special[idx]||'';
   p.innerHTML='<div class="ph">Клетка трассы</div>'+
-    [['','Обычная',PLAIN_BG]].concat(TYPE_KEYS.map(k=>[k,TYPES[k].name,TYPES[k].bg])).map(([k,n,bg])=>'<button type="button" data-t="'+k+'"'+(k===cur?' class="cur"':'')+'><i style="background:'+bg+'"></i>'+n+'</button>').join('');
+    [['','Обычная',PLAIN_BG]].concat(typesFor(modeOf(S)).map(k=>[k,TYPES[k].name,TYPES[k].bg])).map(([k,n,bg])=>'<button type="button" data-t="'+k+'"'+(k===cur?' class="cur"':'')+'><i style="background:'+bg+'"></i>'+n+'</button>').join('');
   p.hidden=false;
   const sr=stage.getBoundingClientRect(), w=p.offsetWidth, h=p.offsetHeight;
   p.style.left=Math.max(8,Math.min(sr.width-w-8,x-sr.left+10))+'px';
@@ -2435,15 +2595,16 @@ document.addEventListener('pointerdown',e=>{ if(!$('palette').hidden&&!$('palett
 /* ---------- wiring ---------- */
 $('optCars').onchange=e=>setSettings({carsPer:+e.target.value});
 $('optLaps').onchange=e=>setSettings({laps:+e.target.value});
-$('optMap').onchange=e=>{ if(!canEditField()) return; const a=+e.target.value===6?6:5; setArm(a); setSettings({arm:a,special:randomField()}); if(ok3d) setTimeout(fitCamera,0); };
+$('optMode').onchange=e=>{ if(!canEditField()) return; const m=e.target.value==='choice'?'choice':'classic'; setSettings({mode:m,special:randomField(m)}); };
+$('optMap').onchange=e=>{ if(!canEditField()) return; const a=+e.target.value===6?6:5; setArm(a); setSettings({arm:a,special:randomField(modeOf(S))}); if(ok3d) setTimeout(fitCamera,0); };
 $('optExit').onchange=e=>setSettings({exit:e.target.value});
 $('optKnock').onchange=e=>setSettings({knock:e.target.value});
 $('optAfk').onchange=e=>setSettings({afk:+e.target.value});
 $('myCar').onchange=e=>setMyCar(e.target.value);
 $('myColor').onchange=e=>setMyColor(+e.target.value);
-$('edClassic').onclick=()=>setSettings({special:classicField(),randomEach:false});
+$('edClassic').onclick=()=>setSettings({special:classicField(modeOf(S)),randomEach:false});
 $('optRandom').onchange=e=>setSettings({randomEach:e.target.checked});
-$('edRandom').onclick=()=>setSettings({special:randomField()});
+$('edRandom').onclick=()=>setSettings({special:randomField(modeOf(S))});
 $('edClear').onclick=()=>setSettings({special:{},randomEach:false});
 $('tabLocal').onclick=()=>{ setupTab='local'; renderSetup(); };
 $('tabOnline').onclick=()=>{ setupTab='online'; renderSetup(); };
@@ -2479,6 +2640,13 @@ function zoomBy(f){
   requestAnimationFrame(step);
 }
 $('zoomIn').onclick=()=>zoomBy(1.25);
+$('phoneBtn').onclick=()=>pgOpen(!PG.open);
+$('pgClose').onclick=()=>pgOpen(false);
+$('pgL').onpointerdown=e=>{ e.preventDefault(); pgMove(-1); };
+$('pgR').onpointerdown=e=>{ e.preventDefault(); pgMove(1); };
+$('pgCv').onpointerdown=e=>{ e.preventDefault(); const r=e.currentTarget.getBoundingClientRect(); pgMove(e.clientX-r.left<r.width/2?-1:1); };
+document.addEventListener('keydown',e=>{ if(!PG.open) return; const tag=(e.target.tagName||'').toLowerCase(); if(tag==='input'||tag==='textarea'||tag==='select') return;
+  const k=e.key.toLowerCase(); if(k==='arrowleft'||k==='a'||k==='ф'){ e.preventDefault(); pgMove(-1); } else if(k==='arrowright'||k==='d'||k==='в'){ e.preventDefault(); pgMove(1); } else if((k===' '||k==='enter')&&PG.over){ e.preventDefault(); pgReset(); } else if(k==='escape') pgOpen(false); });
 $('rocketBtn').onclick=()=>setRocketOut(!rocketOut);
 $('zoomOut').onclick=()=>zoomBy(1/1.25);
 document.addEventListener('keydown',e=>{ const tag=(e.target.tagName||'').toLowerCase(); if(tag==='input'||tag==='select'||tag==='textarea') return;
