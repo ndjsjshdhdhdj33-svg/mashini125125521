@@ -1,0 +1,15 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "db": {
+      ".read": true,
+      ".write": true,
+      "$col": {
+        "$doc": {
+          ".validate": "newData.hasChildren(['json']) && newData.child('json').isString() && newData.child('json').val().length < 60000"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,1575 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Машинки</title>
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Russo+One&display=swap">
+<style>
+/* Layout: dark isometric stage; overlay controls in its corners (camera top-left, player cards top-right, dice dock bottom-left, legend bottom-right); race panel on the right */
+:root{
+  --ground:#2b4b60;
+  --stage:radial-gradient(120% 95% at 50% 28%,#7fb3c6 0%,#5591ab 46%,#356d8a 100%);
+  --panel:#1d3446;
+  --panel-2:#284559;
+  --glass:rgba(22,41,56,.88);
+  --ink:#eceef7;
+  --muted:#a6bccb;
+  --line:#3c5d74;
+  --accent:#ee4f9b;
+  --accent-ink:#ffffff;
+  --danger:#ff8f86;
+  --focus:#8fb4ff;
+  --font-display:"Russo One","Arial Black",system-ui,sans-serif;
+  --font-body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:dark;
+}
+html,body{background:linear-gradient(180deg,#31566d 0%,#24404f 100%) fixed var(--ground);color:var(--ink)}
+body{font-family:var(--font-body);font-size:15px;line-height:1.45}
+*{box-sizing:border-box}
+.app{max-width:1720px;margin:0 auto;padding-block:12px 20px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:14px}
+header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+header h1{font-family:var(--font-display);font-weight:400;font-size:clamp(24px,3.4vw,32px);line-height:1;margin:0;color:var(--ink)}
+header p{margin:0;color:var(--muted)}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}}
+
+/* stage */
+.stage{position:relative;min-width:0;height:max(520px,calc(100vh - 86px));border-radius:16px;overflow:hidden;background:var(--stage);
+  box-shadow:0 0 0 1px var(--line);touch-action:none}
+@media (max-width:900px){.stage{height:max(460px,calc(100svh - 110px))}}
+#cv{display:block;width:100%;height:100%;cursor:grab}
+#cv:active{cursor:grabbing}
+.nogl{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;color:var(--ink);background:var(--stage)}
+.ovbtn{position:absolute;z-index:3;font:inherit;font-size:13px;font-weight:600;color:var(--ink);background:var(--glass);border:1px solid var(--line);
+  border-radius:10px;padding:8px 12px;cursor:pointer;display:flex;gap:7px;align-items:center}
+.ovbtn:hover{background:var(--panel-2)}
+.ovbtn svg{width:16px;height:16px;flex:none}
+.tlbar{position:absolute;z-index:3;top:10px;left:10px;display:flex;gap:8px}
+.tlbar .ovbtn{position:static}
+.ovbtn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.drawer{position:absolute;z-index:6;top:0;right:0;bottom:0;width:min(380px,100%);background:var(--panel);border-left:1px solid var(--line);
+  display:flex;flex-direction:column;box-shadow:-18px 0 40px -20px rgba(0,0,0,.7)}
+.dr-head{display:flex;align-items:center;gap:8px;padding:12px 12px 12px 18px;border-bottom:1px solid var(--line)}
+.dr-head b{flex:1;font-family:var(--font-display);font-weight:400;font-size:18px}
+.dr-x{font:inherit;border:0;background:var(--panel-2);color:var(--ink);width:34px;height:34px;border-radius:9px;display:grid;place-items:center;cursor:pointer}
+.dr-x svg{width:18px;height:18px}
+.dr-x:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.dr-body{flex:1;min-height:0;overflow-y:auto}
+.ovbtn.br{bottom:10px;right:10px}
+.legendpop{position:absolute;z-index:4;right:10px;bottom:56px;width:min(330px,calc(100% - 20px));max-height:calc(100% - 120px);overflow:auto;
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:0 18px 40px -16px rgba(0,0,0,.7);display:flex;flex-direction:column;gap:10px}
+@media (max-width:700px){
+  .ovbtn span{display:none}
+  .ovbtn{padding:9px}
+  .tlbar{top:auto;left:auto;right:10px;bottom:calc(50% + 4px);flex-direction:column}
+  .ovbtn.br{bottom:auto;top:calc(50% + 4px)}
+  .legendpop{left:10px;right:10px;width:auto;bottom:auto;top:70px;max-height:55%}
+}
+
+/* player cards */
+.cards{position:absolute;top:10px;right:10px;width:240px;display:flex;flex-direction:column;gap:7px;pointer-events:none}
+.cards-h{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700;text-align:right;padding-right:4px}
+.pcard{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:center;background:var(--glass);border:1px solid var(--line);border-radius:12px;padding:7px 10px 7px 7px;transition:transform .2s}
+.pcard .av{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;overflow:hidden;background:var(--panel-2);
+  box-shadow:0 0 0 2.5px var(--c);font-family:var(--font-display);font-size:17px;color:var(--c)}
+.pcard .av img{width:100%;height:100%;object-fit:cover;display:block}
+.pcard .pi{min-width:0;display:flex;flex-direction:column;gap:1px}
+.pcard .nm{font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pcard .role{font-size:11px;color:var(--muted);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.pcard .dots{display:flex;gap:3px;margin-top:2px}
+.pcard .dots i{width:9px;height:9px;border-radius:3px;background:#3d5c70}
+.pcard .dots i.on{background:var(--c)}
+.pcard .dots i.fin{background:var(--c);box-shadow:0 0 0 1.5px var(--ink)}
+.pcard.cur{border-color:var(--c);box-shadow:0 0 0 1.5px var(--c);transform:translateX(-6px)}
+.pcard .now{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--c);padding:0 6px;border-radius:999px}
+@media (max-width:700px){
+  .cards{left:8px;right:8px;top:8px;width:auto;flex-direction:row;flex-wrap:wrap;gap:5px}
+  .cards-h{display:none}
+  .pcard{flex:1 1 calc(50% - 5px);grid-template-columns:30px 1fr;gap:7px;padding:5px 7px 5px 5px}
+  .pcard .av{width:30px;height:30px;font-size:12px;border-radius:8px}
+  .pcard .nm{font-size:12px}
+  .pcard .role .rt{display:none}
+  .pcard.cur{transform:none}
+}
+
+/* dice dock */
+.dock{position:absolute;left:10px;bottom:10px;width:min(calc(100% - 20px),470px);
+  background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+@media (max-width:700px){.dock{width:calc(100% - 70px)}}
+.dock-row{display:flex;align-items:center;gap:10px}
+.dock-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.turn{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;min-width:0}
+.turn span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.turn-sub{font-size:12px;color:var(--muted)}
+.msg{margin:0;font-size:13px;color:var(--ink);min-height:1.3em}
+.sw{width:14px;height:14px;border-radius:4px;flex:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+.die{width:50px;height:50px;flex:none;background:#2b3b86;border-radius:12px;padding:7px;display:grid;
+  grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:3px}
+.die span{border-radius:50%;background:#f4f6ff;opacity:0}
+.die span.on{opacity:1}
+.die.rolling{animation:wobble .12s linear infinite}
+@keyframes wobble{0%{transform:rotate(-10deg)}50%{transform:rotate(10deg) scale(1.05)}100%{transform:rotate(-10deg)}}
+.choose{display:flex;gap:6px;flex-wrap:wrap}
+.choose button{font:inherit;font-size:13px;font-weight:600;border:0;border-radius:9px;padding:6px 10px;cursor:pointer;
+  background:var(--panel-2);color:var(--ink);box-shadow:inset 0 0 0 2px var(--carc,#999);display:flex;gap:6px;align-items:center}
+.choose button:disabled{opacity:.4;cursor:default}
+.choose button .k{font-family:var(--font-display);font-weight:400}
+.choose button small{color:var(--muted);font-weight:500}
+
+.btn{font:inherit;font-weight:700;border:0;border-radius:10px;background:var(--accent);color:var(--accent-ink);
+  padding:.62em 1.15em;cursor:pointer;font-size:14px;white-space:nowrap}
+.btn:hover:not(:disabled){filter:brightness(1.08)}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.dark{background:var(--ink);color:var(--ground)}
+.btn.light{background:var(--panel-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.btn.small{font-size:12px;padding:.45em .8em}
+.btn:focus-visible,select:focus-visible,input:focus-visible,.choose button:focus-visible,.tabs button:focus-visible,.palette button:focus-visible,.ovbtn:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+.palette{position:absolute;z-index:5;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px;display:flex;flex-direction:column;gap:2px;
+  box-shadow:0 14px 34px -12px rgba(0,0,0,.7);min-width:170px}
+.palette .ph{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:4px 8px}
+.palette button{font:inherit;font-size:13px;display:flex;gap:8px;align-items:center;border:0;background:none;color:var(--ink);padding:6px 8px;border-radius:8px;cursor:pointer;text-align:left}
+.palette button:hover,.palette button.cur{background:var(--panel-2)}
+.palette i{width:18px;height:18px;border-radius:5px;flex:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
+
+/* side panel */
+aside{background:var(--panel);border-radius:14px;border:1px solid var(--line);min-width:0;overflow:hidden;display:flex;flex-direction:column;height:max(520px,calc(100vh - 86px))}
+@media (max-width:900px){aside{height:auto}}
+aside section,.drawer section{padding:16px 18px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line)}
+h2{margin:0;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--ground);border-radius:10px;padding:3px;gap:3px}
+.tabs button{font:inherit;font-size:13px;font-weight:600;border:0;border-radius:8px;padding:7px;background:none;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--panel-2);color:var(--ink)}
+.grid3{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+label.chk{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink);cursor:pointer}
+label.chk input{width:18px;height:18px;accent-color:var(--accent);margin:0}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:600;min-width:0}
+select,input[type=text]{font:inherit;font-size:14px;color:var(--ink);background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:7px 8px;width:100%;min-width:0}
+input::placeholder{color:var(--muted)}
+select:disabled{color:var(--muted);opacity:.7}
+.slot{display:grid;grid-template-columns:auto minmax(0,1.3fr) minmax(0,1fr);gap:8px;align-items:center}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.hint{font-size:12px;color:var(--muted);margin:0}
+.err{font-size:13px;color:var(--danger);margin:0}
+.err:empty{display:none}
+.code{font-family:var(--font-display);font-size:34px;letter-spacing:.14em;line-height:1}
+.plist{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.plist li{display:flex;gap:8px;align-items:center;font-size:14px}
+.plist .tag{font-size:11px;font-weight:600;background:var(--panel-2);border-radius:999px;padding:1px 7px;color:var(--muted)}
+.legend{display:flex;flex-direction:column;gap:7px;margin:0;padding:0;list-style:none}
+.legend li{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;font-size:13px}
+.legend i{width:22px;height:22px;border-radius:6px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
+.legend .n{font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px}
+.log{list-style:none;margin:0;padding:0;max-height:220px;overflow-y:auto;font-size:13px;display:flex;flex-direction:column;gap:4px}
+.log li{padding-left:10px;border-left:3px solid var(--line);color:var(--muted)}
+.log li:first-child{color:var(--ink);border-left-color:var(--accent)}
+
+/* chat (docked in the side panel) */
+.chatwin{display:flex;flex-direction:column;flex:1;min-height:360px;border-bottom:1px solid var(--line)}
+.cw-head{display:flex;align-items:center;gap:8px;padding:12px 12px 12px 18px;border-bottom:1px solid var(--line)}
+.cw-head b{flex:1;min-width:0;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cw-head button{font:inherit;border:0;background:var(--panel-2);color:var(--ink);width:30px;height:30px;border-radius:8px;display:grid;place-items:center;cursor:pointer}
+.cw-head button svg{width:16px;height:16px}
+.cw-head button:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.chatwin form{padding:10px 12px;border-top:1px solid var(--line);display:flex;gap:8px}
+.chatwin .err{padding:0 12px 10px}
+.logsec{flex:none;border-bottom:0!important}
+.logsec .log{max-height:180px}
+.badge{min-width:20px;height:20px;border-radius:999px;background:var(--accent);color:#fff;font-size:12px;display:grid;place-items:center;padding:0 6px;font-variant-numeric:tabular-nums}
+.chat{list-style:none;margin:0;flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:6px;font-size:13px;padding:10px 12px}
+.chat li{display:flex;flex-direction:column;min-width:0}
+.chat .who{font-weight:700;font-size:12px;display:flex;gap:6px;align-items:center}
+.chat .who time{font-weight:500;color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+.chat .tx{overflow-wrap:anywhere}
+.chat .empty{color:var(--muted);margin:auto;text-align:center}
+body.chatonly header,body.chatonly .stage,body.chatonly .logsec{display:none!important}
+body.chatonly .app{padding:0;max-width:none}
+body.chatonly .layout{display:block}
+body.chatonly aside{height:100vh;border-radius:0;border:0}
+body.chatonly .chatwin{border:0}
+body.chatonly #cwPop{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Машинки</h1>
+    <p>Выведи машины из гаража, объедь трассу и загони всех на свою финишную дорожку.</p>
+  </header>
+  <div class="layout">
+    <div class="stage" id="stage">
+      <canvas id="cv" aria-label="Игровое поле"></canvas>
+      <div class="tlbar">
+      <button class="ovbtn" id="gearBtn" type="button" aria-expanded="false" aria-controls="drawer" aria-label="Настройки"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Настройки</span></button>
+      <button class="ovbtn" id="camBtn" type="button" aria-label="Сбросить камеру"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></svg><span>Сбросить камеру</span></button>
+      </div>
+      <button class="ovbtn br" id="legendBtn" type="button" aria-expanded="false" aria-controls="legendPop" aria-label="Клетки и эффекты"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><path d="M14 16.5h6"/></svg><span>Клетки и эффекты</span></button>
+      <div class="legendpop" id="legendPop" hidden><h2>Клетки и эффекты</h2><ul class="legend" id="legendPopList"></ul></div>
+      <div class="cards" id="cards"></div>
+      <div class="nogl" id="nogl" hidden><p>Не удалось загрузить 3D-движок. Обновите страницу.</p></div>
+      <div class="palette" id="palette" hidden></div>
+      <div class="drawer" id="drawer" hidden role="dialog" aria-label="Настройки">
+        <div class="dr-head"><b>Настройки</b><button class="dr-x" id="drClose" type="button" aria-label="Закрыть настройки"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+        <div class="dr-body">
+      <div id="vSetup">
+        <section>
+          <div class="tabs" role="tablist">
+            <button type="button" role="tab" id="tabLocal" aria-selected="true">На одном экране</button>
+            <button type="button" role="tab" id="tabOnline" aria-selected="false">Онлайн</button>
+          </div>
+          <div id="localBox" style="display:flex;flex-direction:column;gap:10px">
+            <h2>Игроки</h2>
+            <div id="slots" style="display:flex;flex-direction:column;gap:6px"></div>
+            <button class="btn" id="startLocal" type="button">Старт</button>
+            <p class="err" id="localErr"></p>
+          </div>
+          <div id="onlineBox" hidden style="display:flex;flex-direction:column;gap:10px">
+            <label class="f" for="myName">Ваше имя в игре</label>
+            <input type="text" id="myName" maxlength="20" placeholder="Например, Дима" autocomplete="nickname">
+            <p class="hint" id="onlineState">Подключаемся…</p>
+            <button class="btn" id="createRoom" type="button" disabled>Создать комнату</button>
+            <label class="f" for="joinCode">Код комнаты друга</label>
+            <div class="row"><input type="text" id="joinCode" maxlength="4" placeholder="Например, K7QM" autocomplete="off" style="flex:1;text-transform:uppercase"><button class="btn dark" id="joinBtn" type="button" disabled>Войти</button></div>
+            <p class="err" id="onlineErr"></p>
+          </div>
+        </section>
+        <div id="setupSettingsSlot"></div>
+      </div>
+
+      <div id="vLobby" hidden>
+        <section>
+          <h2>Комната</h2>
+          <div class="row" style="justify-content:space-between"><span class="code" id="roomCode">----</span><button class="btn light small" id="copyCode" type="button">Скопировать код</button></div>
+          <button class="btn dark small" id="copyLink" type="button" style="align-self:flex-start">Скопировать ссылку-приглашение</button>
+          <p class="hint">Отправьте ссылку друзьям: по ней они сразу попадут в эту комнату. Или пусть введут код на вкладке «Онлайн». До 4 игроков.</p>
+          <ul class="plist" id="lobbyPlayers"></ul>
+          <label class="f" for="myCar">Ваша машина
+            <select id="myCar"></select>
+          </label>
+          <button class="btn" id="startOnline" type="button">Старт</button>
+          <p class="hint" id="lobbyNote"></p>
+          <p class="err" id="lobbyErr"></p>
+          <button class="btn light small" id="leaveRoom" type="button" style="align-self:flex-start">Выйти из комнаты</button>
+        </section>
+        <div id="lobbySettingsSlot"></div>
+      </div>
+
+      <div id="vGame" hidden>
+        <section>
+          <div class="row" style="justify-content:space-between">
+            <h2>Гонка</h2>
+            <div class="row">
+              <button class="btn light small" id="skipTurn" type="button" hidden>Пропустить ход</button>
+              <button class="btn light small" id="toMenu" type="button">В меню</button>
+            </div>
+          </div>
+          <p class="err" id="gameErr"></p>
+        </section>
+      </div>
+
+      <div id="settingsBox">
+        <section>
+          <h2>Правила</h2>
+          <div class="grid3">
+            <label class="f" for="optCars">Машин у игрока
+              <select id="optCars"><option>1</option><option>2</option><option>3</option><option>4</option></select>
+            </label>
+            <label class="f" for="optLaps">Кругов
+              <select id="optLaps"><option>1</option><option>2</option></select>
+            </label>
+            <label class="f" for="optExit">Выезд из гаража
+              <select id="optExit"><option value="six">только на 6, 3 попытки</option><option value="any">любым броском</option></select>
+            </label>
+            <label class="f" for="optKnock">Сбивание
+              <select id="optKnock"><option value="garage">в гараж</option><option value="back3">на 3 клетки</option><option value="off">выключено</option></select>
+            </label>
+          </div>
+        </section>
+        <section>
+          <h2>Особые клетки</h2>
+          <p class="hint" id="editNote">Нажмите на клетку трассы, чтобы выбрать её тип, или заполните трассу кнопкой.</p>
+          <div class="row">
+            <button class="btn light small" id="edClassic" type="button">Классика</button>
+            <button class="btn light small" id="edRandom" type="button">Случайно</button>
+            <button class="btn light small" id="edClear" type="button">Очистить</button>
+          </div>
+          <label class="chk" for="optRandom"><input type="checkbox" id="optRandom"> Новая случайная расстановка в каждой гонке</label>
+          <div hidden>
+          </div>
+          <ul class="legend" id="legend"></ul>
+        </section>
+      </div>
+        </div>
+      </div>
+      <div class="dock" id="dock">
+        <div class="dock-row">
+          <div class="die" id="die" aria-label="Кубик"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+          <div class="dock-info">
+            <div class="turn"><span class="sw" id="turnSw"></span><span id="turnName"></span></div>
+            <div class="turn-sub" id="turnSub"></div>
+            <p class="msg" id="msg" aria-live="polite"></p>
+          </div>
+          <button class="btn" id="rollBtn" type="button">Бросить</button>
+        </div>
+        <div class="choose" id="chooseBox" hidden></div>
+      </div>
+    </div>
+
+    <aside id="side">
+      <div class="chatwin" id="chatWin" role="region" aria-label="Чат комнаты">
+        <div class="cw-head" id="cwHead">
+          <b id="cwTitle">Чат</b>
+          <button type="button" id="cwPop" hidden title="Открыть в отдельном окне" aria-label="Открыть чат в отдельном окне"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></button>
+        </div>
+        <ul class="chat" id="chatList" aria-live="polite"></ul>
+        <form id="chatForm" autocomplete="off">
+          <input type="text" id="chatInput" maxlength="200" placeholder="Сообщение" style="flex:1" aria-label="Сообщение в чат">
+          <button class="btn dark" id="chatSend" type="submit">Отправить</button>
+        </form>
+        <p class="err" id="chatErr"></p>
+      </div>
+      <section class="logsec">
+        <h2>Журнал заезда</h2>
+        <ul class="log" id="log"></ul>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<!-- ===== НАСТРОЙКИ FIREBASE: вставьте сюда свои значения (см. ИНСТРУКЦИЯ.txt) ===== -->
+<script>
+window.FIREBASE_CONFIG = {
+  apiKey: "",
+  authDomain: "mashinki12512.firebaseapp.com",
+  databaseURL: "https://mashinki12512-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "mashinki12512",
+  appId: ""
+};
+</script>
+<!-- ================================================================================ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+const sleep=ms=>new Promise(r=>setTimeout(r,reduce?Math.round(ms*.35):ms));
+const clone=o=>JSON.parse(JSON.stringify(o));
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const COLORS=[
+  {name:'Красные',hex:'#e5564c',lt:'#f3a59d',ini:'К'},
+  {name:'Синие',hex:'#3f86e6',lt:'#a5c7f3',ini:'С'},
+  {name:'Жёлтые',hex:'#f0bd3e',lt:'#f8dc92',ini:'Ж'},
+  {name:'Фиолетовые',hex:'#9a6ee0',lt:'#cdb6f1',ini:'Ф'}
+];
+const TYPES={
+  turbo:{name:'Турбо',rule:'рывок на 3 клетки вперёд',bg:'#2fb4c4'},
+  oil:{name:'Масло',rule:'занос, 2 клетки назад',bg:'#3b2f67'},
+  pit:{name:'Пит-стоп',rule:'игрок пропускает следующий ход',bg:'#e3e6ea'},
+  bonus:{name:'Канистра',rule:'ещё один бросок',bg:'#f2a541'},
+  light:{name:'Светофор',rule:'дальше эта машина едет только с 4, 5 или 6',bg:'#23263a'},
+  camera:{name:'Камера',rule:'въехал с шестёркой — штраф 3 назад',bg:'#d65a52'},
+  swap:{name:'Обмен',rule:'поменяйся местами с любой машиной соперника на трассе (можно отказаться)',bg:'#3f9d5d'}
+};
+const TYPE_KEYS=Object.keys(TYPES);
+const PLAIN_BG='#575b6d';
+const FACES={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+
+/* ---------- board geometry: cross, 5 cells per arm ---------- */
+const ARM=5, HW=2, N=2*ARM+2*HW+1, CC=ARM+HW, Q=2*(ARM+HW), RL=4*Q, HL=CC-1;
+const RING=(()=>{const r=[],L=N-1,A=CC-HW,B=CC+HW;const up=(a,b,fn)=>{for(let i=a;i<=b;i++)r.push(fn(i));};const dn=(a,b,fn)=>{for(let i=a;i>=b;i--)r.push(fn(i));};
+  up(0,A,c=>[A,c]); dn(A-1,0,rr=>[rr,A]); up(A+1,B,c=>[0,c]); up(1,A,rr=>[rr,B]); up(B+1,L,c=>[A,c]); up(A+1,B,rr=>[rr,L]);
+  dn(L-1,B,c=>[B,c]); up(B+1,L,rr=>[rr,B]); dn(B-1,A,c=>[L,c]); dn(L-1,B,rr=>[rr,A]); dn(A-1,0,c=>[B,c]); dn(B-1,A+1,rr=>[rr,0]); return r;})();
+const START=[0,Q,2*Q,3*Q];
+const JUNC=sl=>(START[sl]+RL-HW)%RL;
+const SAFE=new Set([0,1,2,3].flatMap(sl=>[START[sl],JUNC(sl)]));
+const HOME=(()=>{const h=[[],[],[],[]];for(let k=1;k<=HL;k++){h[0].push([CC,k]);h[1].push([k,CC]);h[2].push([CC,N-1-k]);h[3].push([N-1-k,CC]);}return h;})();
+const GQ=(ARM-1)/2;
+const GARAGE=[[GQ,GQ],[GQ,N-1-GQ],[N-1-GQ,N-1-GQ],[N-1-GQ,GQ]];
+const P=1.32, ROADW=1.0, BOARD=N*P;
+const xz=([r,c])=>[(c-CC)*P,(r-CC)*P];
+const rotG=([r,c],k)=>{ for(let i=0;i<k;i++){ const t=r; r=c; c=N-1-t; } return [r,c]; };
+const DRIVE=sl=>[[GQ,GQ],[GQ,0],RING[START[0]]].map(p=>rotG(p,sl));
+const ringRot=i=>{const a=RING[i],b=RING[(i+1)%RL];return Math.atan2(-(b[0]-a[0]),b[1]-a[1]);};
+const homeRot=(sl,k)=>{const a=HOME[sl][k],b=k<HL-1?HOME[sl][k+1]:[CC,CC];return Math.atan2(-(b[0]-a[0]),b[1]-a[1]);};
+const garageRot=sl=>{const d=[[GQ,GQ],[GQ,0]].map(p=>rotG(p,sl));return Math.atan2(-(d[1][0]-d[0][0]),d[1][1]-d[0][1]);};
+const isStart=i=>START.includes(i);
+
+/* ---------- field presets ---------- */
+function classicField(){
+  const order=['turbo','oil','bonus','light','camera','swap','oil','turbo','camera','bonus','pit','swap'], sp={};
+  for(let q=0;q<4;q++) [3,7,10].forEach((o,j)=>{ sp[q*Q+o]=order[q*3+j]; });
+  return sp;
+}
+function randomField(){
+  const sp={};
+  const W={turbo:3,oil:3,bonus:2,light:2,camera:2,pit:1.5,swap:1.5}, keys=Object.keys(W), tot=keys.reduce((a,k)=>a+W[k],0);
+  const pick=()=>{ let r=Math.random()*tot; for(const k of keys){ r-=W[k]; if(r<=0) return k; } return keys[0]; };
+  const banned=new Set([0,1,2,3].flatMap(sl=>[START[sl],(START[sl]+1)%RL,JUNC(sl)]));
+  for(let i=0;i<RL;i++){
+    if(banned.has(i)||sp[(i+RL-1)%RL]) continue;
+    if(Math.random()<0.42){ let t=pick(); if(t===sp[(i+RL-2)%RL]) t=pick(); sp[i]=t; }
+  }
+  return sp;
+}
+
+/* ---------- state ---------- */
+function defaultSettings(){ return {carsPer:2,laps:1,exit:'six',knock:'garage',randomEach:true,special:randomField()}; }
+function baseState(settings){
+  return {v:2,status:'lobby',seq:0,host:null,settings:settings||defaultSettings(),
+    players:[],cars:[],skip:[],cur:0,phase:'roll',roll:null,events:[],log:[],winner:null};
+}
+let S=baseState();
+let mode='local', setupTab='local';
+let lastSeq=-1, animating=false, busyWrite=false;
+let animQ=Promise.resolve(), writeQ=Promise.resolve();
+let db=null, user=null, uid=null, roomRef=null, roomCode=null, unsub=null, chatUnsub=null;
+const names={}, avatars={};
+let myName='';
+try{ myName=localStorage.getItem('mashinki-name')||''; }catch(e){}
+function needName(errId){
+  const v=$('myName').value.trim().slice(0,20);
+  if(!v){ $(errId).textContent='Сначала введите своё имя.'; $('myName').focus(); return false; }
+  myName=v; try{ localStorage.setItem('mashinki-name',v); }catch(e){}
+  return true;
+}
+const slots=['human','bot','bot','off'];
+const slotCars=['sport','jeep','pickup','formula'];
+const CAR_TYPES_LIST={sport:'Спорткар',jeep:'Джип',pickup:'Пикап',van:'Фургон',formula:'Болид'};
+const carOptions=()=>Object.keys(CAR_TYPES_LIST).map(k=>'<option value="'+k+'">'+CAR_TYPES_LIST[k]+'</option>').join('');
+let botTimer=null;
+
+/* ---------- engine ---------- */
+const slotOf=(s,pi)=>{const p=s.players[pi];return p&&p.slot!=null?p.slot:pi;};
+const col=(s,pi)=>COLORS[slotOf(s,pi)];
+const team=(s,pi)=>col(s,pi).name;
+const say=(s,t)=>s.events.push({t:'msg',text:t});
+const ringEnd=s=>RL*s.settings.laps-(HW-1);
+const goalOf=s=>ringEnd(s)+HL;
+function where(s,c){
+  if(c.dist<=0) return {k:'garage'};
+  const re=ringEnd(s);
+  if(c.dist<=re) return {k:'ring',i:(START[slotOf(s,c.p)]+c.dist-1)%RL};
+  return {k:'home',i:Math.min(HL-1,c.dist-re-1)};
+}
+function carLabel(s,ci){const c=s.cars[ci]; const k=s.cars.filter((x,i)=>x.p===c.p&&i<=ci).length; return team(s,c.p)+(s.settings.carsPer>1?' №'+k:'');}
+function canMove(s,c,v){ if(c.done) return false; if(c.dist===0&&s.settings.exit==='six'&&v!==6) return false; return true; }
+
+function startMatch(s){
+  if(s.settings.randomEach) s.settings.special=randomField();
+  s.cars=[]; s.players.forEach((p,pi)=>{for(let k=0;k<s.settings.carsPer;k++) s.cars.push({p:pi,dist:0,light:false,done:false});});
+  s.skip=s.players.map(()=>0); s.cur=0; s.phase='roll'; s.roll=null; s.winner=null; s.status='play'; s.tries=0;
+  s.log=['Старт! '+s.settings.carsPer+' '+plural(s.settings.carsPer,'машина','машины','машин')+' у каждого, '+s.settings.laps+' '+plural(s.settings.laps,'круг','круга','кругов')+'.'];
+  s.events=[{t:'reset'}];
+}
+function doRoll(s,v){
+  s.events.push({t:'die',v}); s.roll=v;
+  const mov=s.cars.map((c,i)=>i).filter(i=>s.cars[i].p===s.cur&&canMove(s,s.cars[i],v));
+  s.log.unshift(team(s,s.cur)+': выпало '+v);
+  if(!mov.length){
+    const allIn=s.settings.exit==='six'&&s.cars.every(c=>c.p!==s.cur||c.done||c.dist===0);
+    if(allIn){
+      s.tries=(s.tries||0)+1;
+      if(s.tries<3){ say(s,'Выпало '+v+'. Нужна шестёрка, чтобы выехать: попытка '+s.tries+' из 3, бросайте ещё.'); s.phase='roll'; s.roll=null; return; }
+      say(s,'Выпало '+v+'. Три попытки без шестёрки — ход переходит.'); s.log.unshift(team(s,s.cur)+': три попытки без шестёрки'); return endTurn(s,false);
+    }
+    say(s,'Выпало '+v+'. Ходить нечем — ход переходит.'); return endTurn(s,false);
+  }
+  s.tries=0;
+  if(mov.length===1) return doMove(s,mov[0]);
+  s.phase='choose'; say(s,'Выпало '+v+'. Выберите, какая машина поедет.');
+}
+function stepCar(s,ci,n){
+  const c=s.cars[ci], goal=goalOf(s), sg=Math.sign(n), path=[];
+  for(let k=0;k<Math.abs(n);k++){ if(sg<0&&c.dist<=1) break; c.dist+=sg; path.push(c.dist); if(c.dist>=goal) break; }
+  if(path.length) s.events.push({t:'move',car:ci,path});
+  return c.dist>=goal;
+}
+function bump(s,ci){
+  const mode=s.settings.knock||'garage'; if(mode==='off') return;
+  const c=s.cars[ci], w=where(s,c); if(w.k!=='ring'||SAFE.has(w.i)) return;
+  s.cars.forEach((o,oi)=>{
+    if(o.p===c.p||o.done) return; const ow=where(s,o);
+    if(ow.k==='ring'&&ow.i===w.i){
+      o.light=false;
+      if(mode==='back3'){
+        const path=[]; for(let k=0;k<3&&o.dist>1;k++){ o.dist--; path.push(o.dist); }
+        s.events.push({t:'knock',car:oi,to:o.dist,path});
+        s.log.unshift(carLabel(s,ci)+' сбивает '+carLabel(s,oi)+' на 3 клетки назад');
+        say(s,'Бам! '+carLabel(s,ci)+' сбивает '+carLabel(s,oi)+' на 3 клетки назад.');
+      } else {
+        o.dist=0; s.events.push({t:'knock',car:oi,to:0});
+        s.log.unshift(carLabel(s,ci)+' сбивает '+carLabel(s,oi)+' — та возвращается в гараж');
+        say(s,'Бам! '+carLabel(s,ci)+' сбивает '+carLabel(s,oi)+', машина уезжает в гараж.');
+      }
+    }
+  });
+}
+function finishCar(s,ci){
+  const c=s.cars[ci]; c.done=true; c.light=false; c.dist=goalOf(s); s.log.unshift(carLabel(s,ci)+' на финише');
+  if(s.cars.every(x=>x.p!==c.p||x.done)){
+    s.status='over'; s.winner=c.p; s.phase='roll'; s.roll=null;
+    s.log.unshift(team(s,c.p)+' побеждают!'); say(s,team(s,c.p)+' побеждают!'); return;
+  }
+  say(s,carLabel(s,ci)+' на финише.'); endTurn(s,false);
+}
+function doMove(s,ci){
+  const c=s.cars[ci], v=s.roll, nm=carLabel(s,ci);
+  s.roll=null; s.phase='roll';
+  if(c.light){
+    c.light=false;
+    if(v<4){ s.log.unshift(nm+' у светофора: красный, стоит'); say(s,'Красный свет: для '+nm+' нужно 4+, машина стоит.'); return endTurn(s,false); }
+    s.log.unshift(nm+': зелёный, поехали');
+  }
+  if(c.dist===0&&s.settings.exit==='six'){
+    say(s,nm+' выезжает из гаража на старт.'); s.log.unshift(nm+' выезжает на старт');
+    stepCar(s,ci,1); bump(s,ci); return endTurn(s,false);
+  }
+  say(s,(c.dist===0?nm+' выезжает из гаража на ':nm+' едет на ')+v+'.');
+  if(stepCar(s,ci,v)) return finishCar(s,ci);
+  bump(s,ci);
+  const w=where(s,c), t=w.k==='ring'?s.settings.special[w.i]:null; let extra=false;
+  if(t){
+    s.events.push({t:'flash',cell:w.i});
+    if(t==='turbo'){ s.log.unshift(nm+' ловит турбо: +3'); say(s,'Турбо! '+nm+' проходит ещё 3 клетки.'); if(stepCar(s,ci,3)) return finishCar(s,ci); bump(s,ci); }
+    else if(t==='oil'){ s.log.unshift(nm+' на масле: −2'); say(s,'Масло! '+nm+' уносит на 2 клетки назад.'); stepCar(s,ci,-2); bump(s,ci); }
+    else if(t==='pit'){ s.skip[c.p]=1; s.log.unshift(team(s,c.p)+' заехали на пит-стоп'); say(s,'Пит-стоп: '+team(s,c.p)+' пропускают следующий ход.'); }
+    else if(t==='bonus'){ extra=true; s.log.unshift(nm+' берёт канистру: ещё бросок'); say(s,'Канистра! '+team(s,c.p)+' бросают ещё раз.'); }
+    else if(t==='light'){ c.light=true; s.log.unshift(nm+' встала у светофора'); say(s,'Светофор: в следующий раз '+nm+' поедет только с 4, 5 или 6.'); }
+    else if(t==='swap'){
+      const tg=swapTargets(s,ci);
+      if(tg.length){ s.phase='swap'; s.swapCar=ci; s.log.unshift(nm+' на клетке обмена'); say(s,'Обмен! Выберите машину соперника, с которой '+nm+' поменяется местами, или откажитесь.'); return; }
+      say(s,'Обмен: меняться не с кем — на трассе нет машин соперников.');
+    }
+    else if(t==='camera'){
+      if(v===6){ s.log.unshift(nm+' попала под камеру: −3'); say(s,'Камера! Шестёрка — превышение, '+nm+' откатывается на 3.'); stepCar(s,ci,-3); bump(s,ci); }
+      else { s.log.unshift(nm+' проезжает камеру без штрафа'); say(s,'Камера: скорость в норме.'); }
+    }
+  }
+  endTurn(s,extra);
+}
+function swapTargets(s,ci){ const me=s.cars[ci]; return s.cars.map((o,i)=>i).filter(i=>{ const o=s.cars[i]; return o.p!==me.p&&!o.done&&where(s,o).k==='ring'; }); }
+function distAtCell(s,c,cell){
+  const re=ringEnd(s), base=((cell-START[slotOf(s,c.p)]+RL)%RL)+1, lap=Math.max(0,Math.floor((Math.min(c.dist,re)-1)/RL));
+  let d=lap*RL+base; while(d>re&&d-RL>=1) d-=RL; return d;
+}
+function doSwap(s,ti){
+  const ci=s.swapCar; s.swapCar=null;
+  const me=s.cars[ci];
+  if(ti==null||ti<0||!swapTargets(s,ci).includes(ti)){ s.log.unshift(carLabel(s,ci)+' отказывается от обмена'); say(s,'Обмен пропущен.'); return endTurn(s,false); }
+  const o=s.cars[ti], a=where(s,me).i, b=where(s,o).i;
+  const nd=distAtCell(s,me,b), od=distAtCell(s,o,a);
+  me.dist=nd; o.dist=od; me.light=false; o.light=false;
+  s.events.push({t:'swap',a:ci,b:ti,ad:nd,bd:od});
+  s.log.unshift(carLabel(s,ci)+' меняется местами с '+carLabel(s,ti));
+  say(s,carLabel(s,ci)+' и '+carLabel(s,ti)+' поменялись местами.');
+  endTurn(s,false);
+}
+function botSwap(s){
+  const ci=s.swapCar, me=s.cars[ci]; let best=-1, bs=0;
+  swapTargets(s,ci).forEach(ti=>{ const o=s.cars[ti]; const gain=(distAtCell(s,me,where(s,o).i)-me.dist)+(o.dist-distAtCell(s,o,where(s,me).i))*0.6; if(gain>bs){ bs=gain; best=ti; } });
+  return best;
+}
+function endTurn(s,extra){
+  s.phase='roll'; s.roll=null; s.tries=0; s.swapCar=null;
+  if(extra) return;
+  const n=s.players.length;
+  for(let g=0;g<n*3;g++){
+    s.cur=(s.cur+1)%n;
+    if(s.skip[s.cur]>0){ s.skip[s.cur]--; s.log.unshift(team(s,s.cur)+' стоят на пит-стопе и пропускают ход'); continue; }
+    break;
+  }
+}
+function botPick(s){
+  const v=s.roll, goal=goalOf(s), re=ringEnd(s);
+  let best=null,bs=-1e9;
+  s.cars.forEach((c,i)=>{
+    if(c.p!==s.cur||!canMove(s,c,v)) return;
+    let sc=0;
+    if(c.light&&v<4) sc=-8;
+    else{
+      const nd=(c.dist===0&&s.settings.exit==='six')?1:c.dist+v;
+      if(nd>=goal) sc=100;
+      else if(nd>re) sc=8;
+      else{
+        const ri=(START[slotOf(s,c.p)]+nd-1)%RL, t=s.settings.special[ri];
+        sc+={turbo:6,bonus:5,oil:-4,pit:-3,light:-2,camera:v===6?-5:0}[t]||0;
+        if((s.settings.knock||'garage')!=='off'&&!SAFE.has(ri)&&s.cars.some(o=>{ if(o.p===c.p||o.done) return false; const w=where(s,o); return w.k==='ring'&&w.i===ri; })) sc+=3;
+        if(c.dist===0) sc+=(s.settings.exit==='six'?6:3);
+        sc+=nd*0.03;
+      }
+    }
+    sc+=Math.random()*0.5;
+    if(sc>bs){bs=sc;best=i;}
+  });
+  return best;
+}
+function plural(n,a,b,c){const m=n%10,h=n%100;if(m===1&&h!==11)return a;if(m>=2&&m<=4&&(h<12||h>14))return b;return c;}
+
+/* ---------- commit / receive ---------- */
+function commit(fn){
+  const s=clone(S); s.events=[]; fn(s); s.seq=(S.seq||0)+1;
+  if(s.log.length>40) s.log.length=40;
+  if(mode==='online'&&roomRef){
+    busyWrite=true; const ref=roomRef;
+    writeQ=writeQ.then(()=>ref.set(s)).then(()=>{busyWrite=false;},e=>{busyWrite=false;onWriteError(e);});
+  }
+  receive(s);
+}
+function permText(){ return 'База не принимает запись. Проверьте правила Realtime Database в Firebase (см. инструкцию).'; }
+function onWriteError(e){
+  const code=e&&e.code;
+  const text=code==='invalid_argument'?permText():code==='quota_exceeded'?'Хранилище заполнено, ход не сохранился.':'Ход не сохранился, связь прервалась. Попробуйте ещё раз.';
+  ['gameErr','lobbyErr'].forEach(id=>{$(id).textContent=text;});
+  if(roomRef) roomRef.get().then(sn=>{ if(sn.exists){ lastSeq=-1; receive(sn.data()); } }).catch(()=>{});
+}
+function receive(raw){
+  const s=clone(raw); if(typeof s.seq!=='number') s.seq=0;
+  if(!s.settings||!s.settings.special) s.settings=defaultSettings();
+  if(lastSeq>=0&&s.seq<=lastSeq) return;
+  const prev=lastSeq; lastSeq=s.seq;
+  const canAnim=prev>=0&&s.seq===prev+1&&s.events&&s.events.length&&s.status!=='lobby'&&cars3d.length===s.cars.length;
+  S=s;
+  if(mode==='online') refreshNames();
+  animQ=animQ.then(async()=>{
+    animating=true; updateDock();
+    try{ if(canAnim) await playEvents(s.events); }catch(e){ console.error(e); }
+    animating=false; renderAll(); scheduleBot();
+  });
+}
+
+/* ---------- actions ---------- */
+function myTurn(fromBot){
+  if(S.status!=='play'||animating||busyWrite) return false;
+  const p=S.players[S.cur]; if(!p) return false;
+  if(mode==='local') return fromBot?!!p.bot:!p.bot;
+  return p.id===uid;
+}
+function actRoll(fromBot){ if(!myTurn(fromBot)||S.phase!=='roll') return; const v=1+Math.floor(Math.random()*6); commit(s=>doRoll(s,v)); }
+function actChoose(ci,fromBot){
+  if(!myTurn(fromBot)||S.phase!=='choose') return;
+  const c=S.cars[ci]; if(!c||c.p!==S.cur||!canMove(S,c,S.roll)) return;
+  commit(s=>doMove(s,ci));
+}
+function actSwap(ti,fromBot){
+  if(!myTurn(fromBot)||S.phase!=='swap') return;
+  commit(s=>doSwap(s,ti));
+}
+function scheduleBot(){
+  clearTimeout(botTimer);
+  if(mode!=='local'||S.status!=='play') return;
+  const p=S.players[S.cur]; if(!p||!p.bot) return;
+  const seq=S.seq;
+  botTimer=setTimeout(()=>{
+    if(S.seq!==seq||animating) return;
+    if(S.phase==='roll') actRoll(true); else if(S.phase==='swap') actSwap(botSwap(S),true); else actChoose(botPick(S),true);
+  },reduce?300:1100);
+}
+function canEditField(){ return S.status==='lobby'&&(mode==='local'||S.host===uid); }
+function setSettings(patch){ if(!canEditField()) return; commit(s=>{ Object.assign(s.settings,patch); }); }
+
+/* ---------- 3D ---------- */
+const lin=h=>new THREE.Color(h).convertSRGBToLinear();
+function mat(o){ o=Object.assign({},o); if(o.color!==undefined) o.color=lin(o.color); if(o.emissive!==undefined) o.emissive=lin(o.emissive); return new THREE.MeshStandardMaterial(o); }
+const stage=$('stage'), cv=$('cv');
+let renderer=null, scene, camera, controls, boardGroup, tiles=[], cars3d=[], boardKey='', raycaster, ok3d=false, die3d=null;
+const dieAnim={spin:false,start:0,from:null,to:null,settle:0};
+const disp=[];
+const keyOf=()=>JSON.stringify(S.settings.special)+'|'+(S.status==='lobby'?'':S.players.map((p,i)=>slotOf(S,i)).join(','));
+
+function init3D(){
+  if(!window.THREE||!THREE.OrbitControls){ $('nogl').hidden=false; return; }
+  try{ renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true}); renderer.setClearColor(0x000000,0); }catch(e){ $('nogl').hidden=false; return; }
+  ok3d=true; $('die').hidden=true;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  renderer.outputEncoding=THREE.sRGBEncoding; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.05;
+  scene=new THREE.Scene();
+  camera=new THREE.OrthographicCamera(-FR,FR,FR,-FR,0.1,300);
+  controls=new THREE.OrbitControls(camera,renderer.domElement);
+  controls.enableDamping=true; controls.dampingFactor=.08; controls.enablePan=false;
+  controls.minPolarAngle=0.3; controls.maxPolarAngle=1.2; controls.minZoom=0.3; controls.maxZoom=4;
+  scene.add(new THREE.HemisphereLight(lin('#f2f9ff'),lin('#4a6b5a'),0.95));
+  const sun=new THREE.DirectionalLight(lin('#fff0da'),1.3); sun.position.set(-7,18,11); sun.castShadow=true;
+  sun.shadow.mapSize.set(2048,2048); const sc=sun.shadow.camera; sc.left=-13;sc.right=13;sc.top=13;sc.bottom=-13;sc.near=1;sc.far=50; sun.shadow.bias=-0.0005;
+  scene.add(sun);
+  const fill=new THREE.DirectionalLight(lin('#b8c6ff'),0.35); fill.position.set(10,8,-9); scene.add(fill);
+  boardGroup=new THREE.Group(); scene.add(boardGroup);
+  die3d=buildDie(); scene.add(die3d);
+  raycaster=new THREE.Raycaster();
+  new ResizeObserver(resize).observe(stage); resize(); fitCamera();
+  requestAnimationFrame(loop);
+}
+const FR=10;
+function resize(){
+  if(!renderer) return; const w=stage.clientWidth,h=Math.max(1,stage.clientHeight),a=w/h;
+  renderer.setSize(w,h,false); camera.left=-FR*a; camera.right=FR*a; camera.top=FR; camera.bottom=-FR; camera.updateProjectionMatrix();
+}
+function fitCamera(){
+  if(!ok3d) return;
+  const w=stage.clientWidth,h=Math.max(1,stage.clientHeight),a=w/h;
+  const span=(BOARD+0.6)*Math.SQRT2;
+  camera.zoom=Math.min((2*FR*a)/(span*1.04),(2*FR)/(span*0.64+3.4));
+  camera.position.set(30,34,30); controls.target.set(0,-0.3,0);
+  camera.updateProjectionMatrix(); controls.update();
+}
+function disposeTree(o){
+  o.traverse(m=>{ if(m.geometry) m.geometry.dispose(); const mats=Array.isArray(m.material)?m.material:(m.material?[m.material]:[]); mats.forEach(mt=>{ if(mt.map) mt.map.dispose(); mt.dispose(); }); });
+}
+function iconPaths(ctx,type){
+  const P2=d=>new Path2D(d);
+  if(type==='turbo'){ ctx.strokeStyle='#ffffff'; ctx.lineWidth=2.8; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.stroke(P2('M5 6l6 6-6 6M12 6l6 6-6 6')); }
+  else if(type==='oil'){ ctx.fillStyle='#c4a6ff'; ctx.fill(P2('M12 3C9.5 7.5 6.5 10.5 6.5 14.5a5.5 5.5 0 0 0 11 0C17.5 10.5 14.5 7.5 12 3z')); }
+  else if(type==='pit'){ ctx.fillStyle='#2b2f35'; ctx.font='16px "Russo One", "Arial Black", sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('P',12,13); }
+  else if(type==='bonus'){ ctx.fillStyle='#3a2405'; ctx.fill(P2('M8 4h6l4.5 4.5V19a1.5 1.5 0 0 1-1.5 1.5H7A1.5 1.5 0 0 1 5.5 19V6.5A2.5 2.5 0 0 1 8 4z')); }
+  else if(type==='light'){ [['#ff5a4e',6.5],['#ffc83d',12],['#4fd17a',17.5]].forEach(([c,y])=>{ctx.fillStyle=c;ctx.beginPath();ctx.arc(12,y,2.4,0,Math.PI*2);ctx.fill();}); }
+  else if(type==='swap'){ ctx.strokeStyle='#ffffff'; ctx.lineWidth=2.4; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.stroke(P2('M5 9h12M14 5.5L17.5 9 14 12.5M19 15H7M10 11.5L6.5 15 10 18.5')); }
+  else if(type==='camera'){ ctx.fillStyle='#ffffff'; ctx.fill(P2('M4.5 7h10a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-10a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z')); ctx.fill(P2('M16.5 10.2l5-2.4v8.4l-5-2.4z')); }
+}
+function canvasTex(c){ const t=new THREE.CanvasTexture(c); t.anisotropy=renderer.capabilities.getMaxAnisotropy(); t.encoding=THREE.sRGBEncoding; return t; }
+function pipTexture(v){
+  const c=document.createElement('canvas'); c.width=c.height=128; const x=c.getContext('2d');
+  x.fillStyle='#2b3b86'; x.fillRect(0,0,128,128);
+  x.strokeStyle='rgba(255,255,255,.12)'; x.lineWidth=6; x.strokeRect(3,3,122,122);
+  const PT={1:[[64,64]],2:[[36,36],[92,92]],3:[[34,34],[64,64],[94,94]],4:[[36,36],[92,36],[36,92],[92,92]],5:[[34,34],[94,34],[64,64],[34,94],[94,94]],6:[[36,30],[92,30],[36,64],[92,64],[36,98],[92,98]]}[v];
+  x.fillStyle='#f4f6ff'; PT.forEach(([a,b])=>{x.beginPath();x.arc(a,b,11,0,Math.PI*2);x.fill();});
+  return canvasTex(c);
+}
+/* BoxGeometry face order: +x, -x, +y, -y, +z, -z */
+const DIE_FACES=[3,4,1,6,2,5], DIE_Y=0.42;
+function buildDie(){
+  const mats=DIE_FACES.map(v=>mat({map:pipTexture(v),roughness:.4}));
+  const m=new THREE.Mesh(new THREE.BoxGeometry(0.72,0.72,0.72),mats); m.castShadow=true;
+  m.position.set(0,DIE_Y,0); m.quaternion.copy(dieQuat(6)); return m;
+}
+function dieQuat(v){
+  const e={1:[0,0,0],6:[Math.PI,0,0],2:[-Math.PI/2,0,0],5:[Math.PI/2,0,0],3:[0,0,Math.PI/2],4:[0,0,-Math.PI/2]}[v];
+  const q=new THREE.Quaternion().setFromEuler(new THREE.Euler(e[0],e[1],e[2]));
+  return new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),Math.PI/4).multiply(q);
+}
+let padMat=null;
+function setPadColor(hex){ if(padMat) padMat.color.copy(lin(hex)); }
+
+/* top-down painting of grass, roads and markings */
+function boardCanvas(){
+  const SZ=2048, sc=SZ/BOARD, c=document.createElement('canvas'); c.width=c.height=SZ; const x=c.getContext('2d');
+  const U=v=>v*sc;
+  const px=rc=>{ const [wx,wz]=xz(rc); return [(wx+BOARD/2)*sc,(wz+BOARD/2)*sc]; };
+  const ASPH='#575b6d', CURB='#d7dae4';
+  x.fillStyle='#4c7a5f'; x.fillRect(0,0,SZ,SZ);
+  for(let i=0;i<N;i++){ if(i%2) continue; x.fillStyle='rgba(255,255,255,.03)'; x.fillRect(0,U(i*P),SZ,U(P)); }
+  /* ring corner points */
+  const corners=[];
+  for(let i=0;i<RL;i++){ const a=RING[(i+RL-1)%RL], b=RING[i], d=RING[(i+1)%RL];
+    if((b[0]-a[0])!==(d[0]-b[0])||(b[1]-a[1])!==(d[1]-b[1])) corners.push(px(b)); }
+  const isCorner=i=>{ const a=RING[(i+RL-1)%RL], b=RING[i], d=RING[(i+1)%RL]; return (b[0]-a[0])!==(d[0]-b[0])||(b[1]-a[1])!==(d[1]-b[1]); };
+  const ringPath=()=>{
+    const n=corners.length, Rr=U(0.62*P), mid=(p,q)=>[(p[0]+q[0])/2,(p[1]+q[1])/2];
+    x.beginPath(); const st=mid(corners[n-1],corners[0]); x.moveTo(st[0],st[1]);
+    for(let k=0;k<n;k++){ const cu=corners[k], m=mid(cu,corners[(k+1)%n]); x.arcTo(cu[0],cu[1],m[0],m[1],Rr); }
+    x.closePath();
+  };
+  const lane=(sl,w,color)=>{ const a=px(RING[JUNC(sl)]), b=px([CC,CC]); x.strokeStyle=color; x.lineWidth=U(w); x.lineCap='butt'; x.beginPath(); x.moveTo(a[0],a[1]); x.lineTo(b[0],b[1]); x.stroke(); };
+  const drivePath=sl=>{ const pts=DRIVE(sl).map(px); x.beginPath(); x.moveTo(pts[0][0],pts[0][1]); x.arcTo(pts[1][0],pts[1][1],pts[2][0],pts[2][1],U(0.7*P)); x.lineTo(pts[2][0],pts[2][1]); };
+  const DW=0.82;
+  x.lineJoin='round';
+  x.strokeStyle=CURB; x.lineWidth=U(ROADW+0.14); ringPath(); x.stroke();
+  for(let sl=0;sl<4;sl++) lane(sl,ROADW+0.14,CURB);
+  x.lineCap='butt'; for(let sl=0;sl<4;sl++){ x.strokeStyle=CURB; x.lineWidth=U(DW+0.12); drivePath(sl); x.stroke(); }
+  for(let sl=0;sl<4;sl++) lane(sl,ROADW,ASPH);
+  for(let sl=0;sl<4;sl++){ x.strokeStyle=ASPH; x.lineWidth=U(DW); drivePath(sl); x.stroke(); }
+  for(let sl=0;sl<4;sl++){ x.save(); x.setLineDash([U(0.2),U(0.18)]); x.strokeStyle=COLORS[sl].hex; x.lineWidth=U(0.06); drivePath(sl); x.stroke(); x.restore(); }
+  x.strokeStyle=ASPH; x.lineWidth=U(ROADW); ringPath(); x.stroke();
+  /* centre square */
+  const cpx=px([CC,CC]); x.fillStyle='#46715a'; x.fillRect(cpx[0]-U(P*0.62),cpx[1]-U(P*0.62),U(P*1.24),U(P*1.24));
+  /* ring centre line */
+  x.save(); x.setLineDash([U(0.26),U(0.3)]); x.strokeStyle='rgba(255,255,255,.5)'; x.lineWidth=U(0.045); ringPath(); x.stroke(); x.restore();
+  const inCell=(rc,rot,fn)=>{ const [cx,cy]=px(rc); x.save(); x.translate(cx,cy); x.rotate(-rot); fn(); x.restore(); };
+  const rrect=(x0,y0,w,h,r)=>{ x.beginPath(); x.moveTo(x0+r,y0); x.arcTo(x0+w,y0,x0+w,y0+h,r); x.arcTo(x0+w,y0+h,x0,y0+h,r); x.arcTo(x0,y0+h,x0,y0,r); x.arcTo(x0,y0,x0+w,y0,r); x.closePath(); };
+  /* cell ticks on straight parts so cells can be counted */
+  for(let i=0;i<RL;i++){
+    const j=(i+1)%RL; if(isCorner(i)||isCorner(j)) continue;
+    const a=px(RING[i]), b=px(RING[j]), mx=(a[0]+b[0])/2, my=(a[1]+b[1])/2, ang=Math.atan2(b[1]-a[1],b[0]-a[0]);
+    x.save(); x.translate(mx,my); x.rotate(ang); x.fillStyle='rgba(255,255,255,.7)';
+    x.fillRect(-U(0.02),-U(ROADW/2),U(0.04),U(0.13)); x.fillRect(-U(0.02),U(ROADW/2-0.13),U(0.04),U(0.13)); x.restore();
+  }
+  /* home lanes: team dashed edges, cell tints, finish band */
+  HOME.forEach((ln,sl)=>{
+    const col=COLORS[sl];
+    const a=px(RING[JUNC(sl)]), b=px([CC,CC]), ang=Math.atan2(b[1]-a[1],b[0]-a[0]), len=Math.hypot(b[0]-a[0],b[1]-a[1]);
+    x.save(); x.translate(a[0],a[1]); x.rotate(ang);
+    x.setLineDash([U(0.22),U(0.16)]); x.strokeStyle=col.hex; x.lineWidth=U(0.07);
+    [-1,1].forEach(sg=>{ x.beginPath(); x.moveTo(U(ROADW*0.6),sg*U(ROADW/2-0.08)); x.lineTo(len-U(P*0.62),sg*U(ROADW/2-0.08)); x.stroke(); });
+    x.restore();
+    ln.forEach((rc,k)=>inCell(rc,homeRot(sl,k),()=>{
+      const L=U(P), W2=U(ROADW-0.24);
+      x.fillStyle=col.hex; x.globalAlpha=k===HL-1?0.85:0.22; rrect(-L/2+U(0.06),-W2/2,L-U(0.12),W2,U(0.08)); x.fill(); x.globalAlpha=1;
+      if(k===HL-1){ const q=W2/6; for(let r=0;r<6;r++){ x.fillStyle=r%2?'#262a33':'#f7f4ec'; x.fillRect(L/2-U(0.06)-q,-W2/2+r*q,q,q); } }
+      x.strokeStyle='rgba(255,255,255,.85)'; x.lineWidth=U(0.07); x.lineCap='round'; x.lineJoin='round';
+      x.beginPath(); x.moveTo(-U(0.1),-U(0.16)); x.lineTo(U(0.08),0); x.lineTo(-U(0.1),U(0.16)); x.stroke();
+    }));
+  });
+  /* start cells */
+  START.forEach((i,sl)=>inCell(RING[i],ringRot(i),()=>{
+    const L=U(P*0.9), W2=U(ROADW), q=W2/6;
+    x.fillStyle=COLORS[sl].hex; x.fillRect(-L/2,-W2/2,L,W2);
+    for(let r=0;r<6;r++){ x.fillStyle=r%2?'#262a33':'#f7f4ec'; x.fillRect(-L/2,-W2/2+r*q,q,q); x.fillStyle=r%2?'#f7f4ec':'#262a33'; x.fillRect(-L/2+q,-W2/2+r*q,q,q); }
+    x.strokeStyle='#ffffff'; x.lineWidth=U(0.08); x.lineCap='round'; x.lineJoin='round';
+    x.beginPath(); x.moveTo(U(0.02),-U(0.2)); x.lineTo(U(0.24),0); x.lineTo(U(0.02),U(0.2)); x.stroke();
+  }));
+  /* special cells: coloured stripe across the road with a small icon */
+  for(let i=0;i<RL;i++){
+    const t=S.settings.special[i]; if(!t) continue;
+    inCell(RING[i],ringRot(i),()=>{
+      const L=U(P*0.6), W2=U(ROADW-0.06);
+      x.fillStyle=TYPES[t].bg; rrect(-L/2,-W2/2,L,W2,U(0.07)); x.fill();
+      x.fillStyle='rgba(255,255,255,.18)'; x.fillRect(-L/2,-W2/2,U(0.05),W2); x.fillRect(L/2-U(0.05),-W2/2,U(0.05),W2);
+    });
+    const [cx,cy]=px(RING[i]), s=U(0.5)/24; x.save(); x.translate(cx-12*s,cy-12*s); x.scale(s,s); iconPaths(x,t); x.restore();
+  }
+  return c;
+}
+function buildBoard(){
+  if(!ok3d){ boardKey=keyOf(); return; }
+  disposeTree(boardGroup); boardGroup.clear(); tiles=[];
+  const MS=o=>mat(Object.assign({roughness:.9},o));
+  const B=BOARD;
+  const soil=new THREE.Mesh(new THREE.BoxGeometry(B+0.5,0.34,B+0.5),MS({color:'#4a3c34'})); soil.position.y=-0.47; boardGroup.add(soil);
+  const base=new THREE.Mesh(new THREE.BoxGeometry(B+0.5,0.3,B+0.5),MS({color:'#3f6b52'})); base.position.y=-0.15; base.receiveShadow=true; boardGroup.add(base);
+  const top=new THREE.Mesh(new THREE.PlaneGeometry(B,B),mat({map:canvasTex(boardCanvas()),roughness:.92}));
+  top.rotation.x=-Math.PI/2; top.position.y=0.002; top.receiveShadow=true; boardGroup.add(top);
+  /* invisible ring cells for clicks and flashes */
+  const cellGeo=new THREE.PlaneGeometry(P*0.92,P*0.92);
+  for(let i=0;i<RL;i++){
+    const m2=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0,depthWrite:false});
+    const m=new THREE.Mesh(cellGeo,m2); const [x,z]=xz(RING[i]);
+    m.rotation.x=-Math.PI/2; m.position.set(x,0.012,z); m.userData={idx:i,ring:true,top:m2,flash:0};
+    boardGroup.add(m); tiles.push(m);
+  }
+  /* centre frame (current player colour) */
+  padMat=MS({color:'#8b90ad',roughness:.5});
+  const fs=P*1.16, ft=0.08;
+  [[0,-fs/2,fs+ft,ft],[0,fs/2,fs+ft,ft],[-fs/2,0,ft,fs],[fs/2,0,ft,fs]].forEach(([dx,dz,w,d])=>{ const b=new THREE.Mesh(new THREE.BoxGeometry(w,0.05,d),padMat); b.position.set(dx,0.025,dz); boardGroup.add(b); });
+  /* garages */
+  const used=new Set(S.status==='lobby'?[]:S.players.map((p,i)=>slotOf(S,i)));
+  const padM=MS({color:'#6a6f86',roughness:.85}), postGeo=new THREE.BoxGeometry(0.06,0.24,0.06);
+  GARAGE.forEach((g,sl)=>{
+    const [x,z]=xz(g), G=2.95, ax=Math.sign(x), az=Math.sign(z);
+    const pad=new THREE.Mesh(new THREE.BoxGeometry(G,0.08,G),padM); pad.position.set(x,0.04,z); pad.receiveShadow=true; boardGroup.add(pad);
+    const fm=MS({color:used.has(sl)?COLORS[sl].hex:'#d4d8e2',roughness:.5}), fenceM=MS({color:COLORS[sl].hex,roughness:.7}), inset=0.16, L=G-2*inset;
+    [[0,-L/2,L+0.06,0.06],[0,L/2,L+0.06,0.06],[-L/2,0,0.06,L],[L/2,0,0.06,L]].forEach(([dx,dz,w,d])=>{ const b=new THREE.Mesh(new THREE.BoxGeometry(w,0.02,d),fm); b.position.set(x+dx,0.09,z+dz); boardGroup.add(b); });
+    /* fences on the two sides facing the track */
+    const fence=(x0,z0,x1,z1)=>{
+      const len=Math.hypot(x1-x0,z1-z0), n=Math.max(2,Math.round(len/0.36)), ang=Math.atan2(-(z1-z0),x1-x0);
+      for(let k=0;k<=n;k++){ const p=new THREE.Mesh(postGeo,fenceM); p.position.set(x0+(x1-x0)*k/n,0.12,z0+(z1-z0)*k/n); p.castShadow=true; boardGroup.add(p); }
+      [0.09,0.19].forEach(h=>{ const r=new THREE.Mesh(new THREE.BoxGeometry(len,0.035,0.025),fenceM); r.position.set((x0+x1)/2,h,(z0+z1)/2); r.rotation.y=ang; r.castShadow=true; boardGroup.add(r); });
+    };
+    const e=G/2+0.12, ex=x-ax*e, ez=z-az*e;
+    fence(ex,z+az*(G/2),ex,z-az*(G/2)+az*0.0);
+    fence(x+ax*(G/2),ez,x-ax*(G/2),ez);
+  });
+  /* signposts in the grass pockets */
+  const postM=MS({color:'#c2522a'}), boardM=MS({color:'#e0662f',roughness:.6});
+  [0,1,2,3].forEach(k=>{
+    const g=new THREE.Group();
+    const p=new THREE.Mesh(new THREE.BoxGeometry(0.07,0.6,0.07),postM); p.position.y=0.3; p.castShadow=true; g.add(p);
+    const b=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.17,0.05),boardM); b.position.set(0.12,0.54,0); b.castShadow=true; g.add(b);
+    const [gx,gz]=xz(rotG([CC-1,ARM-1.6],k)); g.position.set(gx,0,gz); g.rotation.y=[0.6,2.2,-1.0,3.7][k]; boardGroup.add(g);
+  });
+  boardKey=keyOf();
+}
+const carTypeOf=pi=>{ const p=S.players[pi]; return p&&CAR_TYPES_LIST[p.car]?p.car:'sport'; };
+function carModel(hex,type){
+  const g=new THREE.Group(), body=new THREE.Group(); g.add(body);
+  const paint=mat({color:hex,roughness:.3,metalness:.1});
+  const dark=mat({color:'#23303d',roughness:.25,metalness:.3});
+  const tyre=mat({color:'#141518',roughness:.9});
+  const rim=mat({color:'#c9ccd2',roughness:.4,metalness:.6});
+  const white=mat({color:'#f4f1e6',roughness:.6});
+  const hl=mat({color:'#fff6c9',emissive:'#fff1a8',emissiveIntensity:.6});
+  const tl=mat({color:'#ff4d40',emissive:'#ff2a1c',emissiveIntensity:.5});
+  const add=(geo,m,x,y,z)=>{const o=new THREE.Mesh(geo,m); o.position.set(x,y,z); o.castShadow=true; body.add(o); return o;};
+  const box=(w,h,d,m,x,y,z)=>add(new THREE.BoxGeometry(w,h,d),m,x,y,z);
+  const wheels=(r,w,xs,zs,y)=>{ const wg=new THREE.CylinderGeometry(r,r,w,16), rg=new THREE.CylinderGeometry(r*0.52,r*0.52,w+0.004,10);
+    xs.forEach(x=>zs.forEach(z=>{ add(wg,tyre,x,y,z).rotation.x=Math.PI/2; add(rg,rim,x,y,z).rotation.x=Math.PI/2; })); };
+  const lights=(xf,xb,y,zs)=>zs.forEach(z=>{ box(0.02,0.04,0.07,hl,xf,y,z); box(0.02,0.035,0.07,tl,xb,y,z); });
+  if(type==='jeep'){
+    box(0.62,0.18,0.36,paint,0,0.22,0);
+    box(0.36,0.16,0.33,dark,-0.05,0.39,0);
+    box(0.38,0.03,0.35,paint,-0.05,0.48,0);
+    box(0.04,0.08,0.38,dark,0.32,0.2,0);
+    const sp=add(new THREE.CylinderGeometry(0.08,0.08,0.05,14),tyre,-0.34,0.28,0); sp.rotation.z=Math.PI/2;
+    wheels(0.11,0.09,[0.2,-0.2],[0.19,-0.19],0.11); lights(0.315,-0.315,0.24,[-0.11,0.11]);
+  } else if(type==='pickup'){
+    box(0.68,0.13,0.34,paint,0,0.17,0);
+    box(0.25,0.15,0.32,dark,0.09,0.31,0);
+    box(0.26,0.03,0.33,paint,0.09,0.4,0);
+    box(0.3,0.08,0.025,paint,-0.19,0.27,0.16); box(0.3,0.08,0.025,paint,-0.19,0.27,-0.16); box(0.025,0.08,0.34,paint,-0.33,0.27,0);
+    box(0.645,0.006,0.07,white,0,0.236,0);
+    wheels(0.095,0.08,[0.22,-0.2],[0.18,-0.18],0.095); lights(0.345,-0.345,0.19,[-0.1,0.1]);
+  } else if(type==='van'){
+    box(0.66,0.3,0.34,paint,-0.01,0.27,0);
+    box(0.03,0.13,0.3,dark,0.32,0.33,0);
+    box(0.44,0.08,0.345,dark,-0.06,0.35,0);
+    box(0.664,0.03,0.344,white,-0.01,0.2,0);
+    wheels(0.085,0.075,[0.21,-0.21],[0.18,-0.18],0.085); lights(0.325,-0.345,0.2,[-0.11,0.11]);
+  } else if(type==='formula'){
+    box(0.72,0.07,0.14,paint,0,0.1,0);
+    box(0.3,0.08,0.28,paint,-0.04,0.11,0);
+    box(0.06,0.02,0.4,dark,0.37,0.06,0);
+    box(0.07,0.03,0.36,paint,-0.35,0.25,0);
+    box(0.02,0.12,0.02,dark,-0.33,0.18,0.08); box(0.02,0.12,0.02,dark,-0.33,0.18,-0.08);
+    add(new THREE.SphereGeometry(0.055,12,10),white,-0.02,0.18,0);
+    box(0.36,0.01,0.05,white,0.12,0.137,0);
+    wheels(0.095,0.08,[0.24,-0.22],[0.2,-0.2],0.095);
+  } else {
+    box(0.64,0.13,0.34,paint,0,0.16,0);
+    box(0.2,0.05,0.32,paint,0.2,0.235,0).rotation.z=-0.12;
+    box(0.3,0.12,0.28,dark,-0.05,0.28,0);
+    box(0.24,0.025,0.26,paint,-0.06,0.35,0);
+    box(0.645,0.006,0.07,white,0,0.226,0);
+    box(0.07,0.025,0.38,dark,-0.3,0.33,0);
+    [-0.12,0.12].forEach(z=>box(0.03,0.08,0.02,dark,-0.3,0.27,z));
+    wheels(0.085,0.07,[0.2,-0.2],[0.18,-0.18],0.09); lights(0.32,-0.32,0.17,[-0.1,0.1]);
+  }
+  const ring=new THREE.Mesh(new THREE.RingGeometry(0.42,0.49,40),new THREE.MeshBasicMaterial({color:lin('#ffffff'),transparent:true,opacity:0,depthWrite:false}));
+  ring.rotation.x=-Math.PI/2; ring.position.y=0.015; g.add(ring);
+  g.userData={ring}; return g;
+}
+function buildCars(){
+  cars3d.forEach(o=>{ if(o.g){ scene.remove(o.g); disposeTree(o.g); } });
+  cars3d=[];
+  S.cars.forEach((c,ci)=>{
+    const o={ci,p:c.p,sl:slotOf(S,c.p),type:carTypeOf(c.p),tx:0,tz:0,ts:1,trot:0,ty:0.01,hop:-1,g:null};
+    if(ok3d){ o.g=carModel(COLORS[o.sl].hex,o.type); o.g.traverse(m=>{m.userData.ci=ci;}); scene.add(o.g); }
+    cars3d.push(o);
+  });
+}
+function relayout(snap){
+  const groups={}, garage={};
+  disp.forEach((d,i)=>{
+    const o=cars3d[i]; if(!o) return;
+    const w=where(S,{p:d.p,dist:d.dist});
+    if(w.k==='garage'){ (garage[o.sl]=garage[o.sl]||[]).push(i); return; }
+    const key=w.k==='ring'?'r'+w.i:'h'+o.sl+'_'+w.i;
+    (groups[key]=groups[key]||{w,sl:o.sl,ids:[]}).ids.push(i);
+  });
+  Object.values(groups).forEach(G=>{
+    const rc=G.w.k==='ring'?RING[G.w.i]:HOME[G.sl][G.w.i], [cx,cz]=xz(rc), m=G.ids.length, g=Math.ceil(Math.sqrt(m)), sp=0.9/g;
+    const sc=m===1?1:g===2?0.6:0.4, rot=G.w.k==='ring'?ringRot(G.w.i):homeRot(G.sl,G.w.i);
+    G.ids.forEach((ci,j)=>{ const o=cars3d[ci]; o.tx=cx+((j%g)-(g-1)/2)*sp; o.tz=cz+(Math.floor(j/g)-(g-1)/2)*sp; o.ts=sc; o.trot=rot; o.ty=0.01; });
+  });
+  Object.keys(garage).forEach(sl=>{
+    const [gx,gz]=xz(GARAGE[sl]);
+    garage[sl].forEach(ci=>{
+      const o=cars3d[ci], k=S.cars.filter((x,i)=>x.p===S.cars[ci].p&&i<ci).length;
+      o.tx=gx+((k%2)-.5)*1.2; o.tz=gz+(Math.floor(k/2)-.5)*1.2; o.ts=0.95; o.trot=garageRot(+sl); o.ty=0.085;
+    });
+  });
+  if(snap) cars3d.forEach(o=>{ o.x=o.tx; o.z=o.tz; o.s=o.ts; o.rot=o.trot; o.y=o.ty; });
+}
+let lastT=performance.now();
+function loop(t){
+  requestAnimationFrame(loop);
+  const dt=Math.min(0.05,(t-lastT)/1000); lastT=t;
+  const f=1-Math.exp(-dt*6.5);
+  const sel=selectableSet();
+  cars3d.forEach(o=>{
+    if(!o.g) return;
+    if(o.x===undefined){ o.x=o.tx;o.z=o.tz;o.s=o.ts;o.rot=o.trot;o.y=o.ty; }
+    o.x+=(o.tx-o.x)*f; o.z+=(o.tz-o.z)*f; o.s+=(o.ts-o.s)*f; o.y+=(o.ty-o.y)*f;
+    let d=o.trot-o.rot; d=Math.atan2(Math.sin(d),Math.cos(d)); o.rot+=d*f;
+    let hop=0; if(o.hop>=0){ const a=(t-o.hop)/(o.hopH?560:340); if(a<1) hop=Math.sin(Math.PI*a)*(o.hopH||0.14); else { o.hop=-1; o.hopH=0; } }
+    let spin=0; if(o.spin){ const a=(t-o.spin)/560; if(a<1) spin=a*Math.PI*4; else o.spin=0; }
+    o.g.position.set(o.x,o.y+hop,o.z); o.g.scale.setScalar(o.s); o.g.rotation.y=o.rot+spin;
+    const ring=o.g.userData.ring, dd=disp[o.ci], active=S.status==='play'&&dd&&!dd.done&&o.p===S.cur;
+    ring.material.opacity=sel.has(o.ci)?0.55+0.4*Math.sin(t/180):active?0.3:0;
+    ring.scale.setScalar(sel.has(o.ci)?1+0.08*Math.sin(t/180):1);
+  });
+  tiles.forEach(m=>{ const u=m.userData; if(u.flash){ const a=(t-u.flash)/650; u.top.opacity=a<1?0.5*Math.sin(Math.PI*a):0; if(a>=1) u.flash=0; } });
+  if(die3d){
+    const canRoll=S.status==='play'&&S.phase==='roll'&&myTurn(false)&&!dieAnim.spin;
+    die3d.scale.setScalar(canRoll?1+0.07*Math.sin(t/170):1);
+    if(dieAnim.spin){ const a=(t-dieAnim.start)/1000; die3d.rotation.x+=dt*11; die3d.rotation.y+=dt*7; die3d.rotation.z+=dt*9; die3d.position.y=DIE_Y+Math.abs(Math.sin(a*9))*0.6; }
+    else if(dieAnim.to){ const a=Math.min(1,(t-dieAnim.settle)/260); die3d.quaternion.copy(dieAnim.from).slerp(dieAnim.to,1-Math.pow(1-a,3)); die3d.position.y=DIE_Y; if(a>=1) dieAnim.to=null; }
+  }
+  controls.update(); renderer.render(scene,camera);
+}
+function selectableSet(){
+  const s=new Set();
+  if(S.status==='play'&&S.phase==='choose'&&myTurn(false)) S.cars.forEach((c,i)=>{ if(c.p===S.cur&&canMove(S,c,S.roll)) s.add(i); });
+  if(S.status==='play'&&S.phase==='swap'&&myTurn(false)&&S.swapCar!=null) swapTargets(S,S.swapCar).forEach(i=>s.add(i));
+  return s;
+}
+
+/* ---------- playback ---------- */
+async function playEvents(evs){
+  for(const e of evs){
+    if(e.t==='die'){ await rollDieAnim(e.v); }
+    else if(e.t==='msg'){ $('msg').textContent=e.text; }
+    else if(e.t==='move'){
+      for(const d of e.path){
+        if(!disp[e.car]) break;
+        const o=cars3d[e.car];
+        if(disp[e.car].dist===0&&d>0&&o){
+          const pts=DRIVE(o.sl), [cx,cz]=xz(pts[1]), [gx,gz]=xz(pts[0]);
+          o.tx=cx; o.tz=cz; o.ts=1; o.ty=0.01; o.trot=Math.atan2(-(cz-gz),cx-gx); o.hop=performance.now(); await sleep(520);
+        }
+        disp[e.car].dist=d; relayout(false); if(o) o.hop=performance.now(); await sleep(400);
+      }
+    }
+    else if(e.t==='swap'){
+      [[e.a,e.ad],[e.b,e.bd]].forEach(([ci,d])=>{ const o=cars3d[ci]; if(o){ o.spin=performance.now(); o.hopH=0.7; o.hop=performance.now(); } if(disp[ci]) disp[ci].dist=d; });
+      relayout(false); await sleep(900);
+    }
+    else if(e.t==='knock'){
+      const o=cars3d[e.car];
+      if(o){ o.spin=performance.now(); o.hopH=0.55; o.hop=performance.now(); }
+      await sleep(560);
+      if(disp[e.car]) disp[e.car].dist=(e.to==null?0:e.to); relayout(false); await sleep(520);
+    }
+    else if(e.t==='flash'){ const m=tiles[e.cell]; if(m) m.userData.flash=performance.now(); await sleep(550); }
+  }
+  await sleep(450);
+}
+function showFace(v){ const s=$('die').children; for(let i=0;i<9;i++) s[i].classList.toggle('on',!!v&&FACES[v].includes(i)); }
+async function rollDieAnim(v){
+  lastDie=v;
+  if(ok3d){
+    dieAnim.spin=true; dieAnim.start=performance.now(); await sleep(650);
+    dieAnim.spin=false; dieAnim.from=die3d.quaternion.clone(); dieAnim.to=dieQuat(v); dieAnim.settle=performance.now();
+    showFace(v); await sleep(330); return;
+  }
+  const die=$('die'); die.classList.add('rolling');
+  for(let k=0;k<8;k++){ showFace(1+Math.floor(Math.random()*6)); await sleep(60); }
+  showFace(v); die.classList.remove('rolling'); await sleep(150);
+}
+function setDieStill(v){ showFace(v); if(ok3d&&!dieAnim.spin&&!dieAnim.to) die3d.quaternion.copy(dieQuat(v)); }
+
+/* ---------- render ---------- */
+let lastDie=6;
+function renderAll(){
+  if(boardKey!==keyOf()) buildBoard();
+  const sameCars=cars3d.length===S.cars.length&&cars3d.every((o,i)=>o.p===S.cars[i].p&&o.sl===slotOf(S,S.cars[i].p)&&o.type===carTypeOf(S.cars[i].p));
+  if(!sameCars) buildCars();
+  disp.length=0; S.cars.forEach(c=>disp.push({p:c.p,dist:c.dist,done:c.done}));
+  relayout(!sameCars);
+  updateDock(); updateSide(); renderCards();
+}
+function pName(pi){
+  const p=S.players[pi], t=team(S,pi);
+  if(!p) return t;
+  if(mode==='local') return t;
+  if(p.id===uid) return 'Вы';
+  return names[p.id]||'Игрок '+(pi+1);
+}
+function updateDock(){
+  const st=S.status, btn=$('rollBtn'), box=$('chooseBox');
+  setPadColor(st==='play'&&S.players[S.cur]?col(S,S.cur).hex:st==='over'&&S.players[S.winner]?col(S,S.winner).hex:'#8b90ad');
+  box.hidden=true;
+  if(st==='lobby'){
+    $('turnSw').style.background='var(--accent)';
+    $('turnName').textContent=mode==='online'?'Комната '+(roomCode||''):'Подготовка к гонке';
+    $('turnSub').textContent=S.settings.carsPer+' '+plural(S.settings.carsPer,'машина','машины','машин')+' у игрока · '+S.settings.laps+' '+plural(S.settings.laps,'круг','круга','кругов');
+    $('msg').textContent=canEditField()?'Нажимайте на клетки трассы, чтобы расставить усложнения.':'Ждём, пока хозяин комнаты начнёт гонку.';
+    btn.textContent='Старт'; btn.disabled=mode==='online'?!(S.host===uid&&S.players.length>=2):false;
+    btn.onclick=()=>{ mode==='online'?startOnline():startLocal(); };
+    setDieStill(lastDie); return;
+  }
+  if(st==='over'){
+    const w=S.winner;
+    $('turnSw').style.background=col(S,w).hex;
+    $('turnName').textContent=(mode==='online'?pName(w)+' · ':'')+team(S,w)+' — победа!';
+    $('turnSub').textContent='Все машины команды на финише';
+    if(!animating) $('msg').textContent=mode==='online'&&S.host!==uid?'Хозяин комнаты может начать новую гонку.':'Сыграем ещё?';
+    btn.textContent='Новая гонка'; btn.disabled=animating||(mode==='online'&&S.host!==uid);
+    btn.onclick=newRace; return;
+  }
+  const p=S.players[S.cur]; if(!p) return;
+  $('turnSw').style.background=col(S,S.cur).hex;
+  let who;
+  if(mode==='online') who=(p.id===uid?'Ваш ход':'Ходит '+pName(S.cur))+' · '+team(S,S.cur);
+  else who='Ходят '+team(S,S.cur)+(p.bot?' (компьютер)':'');
+  $('turnName').textContent=who;
+  $('turnSub').textContent=S.phase==='swap'?'Обмен: выберите машину соперника':S.phase==='choose'?'Выпало '+S.roll+' — выберите машину':(S.tries?'Нужна шестёрка: попытка '+(S.tries+1)+' из 3':'Бросьте кубик — можно нажать на кубик на поле');
+  if(S.phase==='choose'&&!animating) setDieStill(S.roll);
+  const mine=myTurn(false);
+  btn.onclick=()=>actRoll(false);
+  btn.textContent=mode==='local'&&p.bot?'Компьютер…':'Бросить';
+  btn.disabled=!(mine&&S.phase==='roll');
+  if(S.phase==='choose'&&!animating){
+    box.hidden=false; box.innerHTML='';
+    const re=ringEnd(S); let k=0;
+    S.cars.forEach((c,i)=>{
+      if(c.p!==S.cur) return; k++;
+      if(c.done) return;
+      const ok=canMove(S,c,S.roll);
+      const b=document.createElement('button'); b.type='button'; b.style.setProperty('--carc',col(S,c.p).hex);
+      const st=c.dist===0?(S.settings.exit==='six'?(ok?'выехать на старт':'в гараже, нужна 6'):'в гараже'):c.light?'светофор: нужно 4+':c.dist>re?'финишная дорожка':'пройдено '+c.dist+' из '+re;
+      b.innerHTML='<span class="k">'+k+'</span> Машина '+k+' <small>'+st+'</small>';
+      b.disabled=!mine||!ok; b.onclick=()=>actChoose(i,false);
+      box.appendChild(b);
+    });
+  }
+  if(S.phase==='swap'&&!animating&&S.swapCar!=null){
+    box.hidden=false; box.innerHTML='';
+    const re=ringEnd(S);
+    swapTargets(S,S.swapCar).forEach(i=>{
+      const c=S.cars[i], b=document.createElement('button'); b.type='button'; b.style.setProperty('--carc',col(S,c.p).hex);
+      b.innerHTML='<span class="k">⇄</span> '+esc(carLabel(S,i))+' <small>пройдено '+Math.min(c.dist,re)+' из '+re+'</small>';
+      b.disabled=!mine; b.onclick=()=>actSwap(i,false); box.appendChild(b);
+    });
+    const no=document.createElement('button'); no.type='button'; no.style.setProperty('--carc','var(--line)');
+    no.textContent='Не меняться'; no.disabled=!mine; no.onclick=()=>actSwap(-1,false); box.appendChild(no);
+  }
+}
+function renderCards(){
+  const box=$('cards'); box.innerHTML='';
+  if(!S.players.length) return;
+  box.insertAdjacentHTML('beforeend','<div class="cards-h">'+(S.status==='over'?'Финиш':'Игроки')+'</div>');
+  S.players.forEach((p,pi)=>{
+    const c=col(S,pi), d=document.createElement('div');
+    const cur=(S.status==='play'&&pi===S.cur)||(S.status==='over'&&pi===S.winner);
+    d.className='pcard'+(cur?' cur':''); d.style.setProperty('--c',c.hex);
+    const role=(mode==='local'?(p.bot?'Компьютер':'Человек'):(p.id===S.host?'Хозяин':'Игрок'))+' · '+CAR_TYPES_LIST[carTypeOf(pi)];
+    const now=S.status==='over'?(pi===S.winner?'<span class="now">победа</span>':''):(cur?'<span class="now">ходит</span>':'');
+    let dots='';
+    S.cars.forEach(x=>{ if(x.p!==pi) return; dots+='<i class="'+(x.done?'fin':x.dist>0?'on':'')+'" title="'+(x.done?'финиш':x.dist>0?'на трассе':'в гараже')+'"></i>'; });
+    const skip=S.skip&&S.skip[pi]?'<span class="rt">· пит-стоп</span>':'';
+    d.innerHTML='<div class="av"></div><div class="pi"><span class="nm"></span><span class="role"><span class="rt">'+role+(mode==='online'?' · '+esc(c.name):'')+'</span>'+skip+now+'</span><span class="dots">'+dots+'</span></div>';
+    const av=d.querySelector('.av');
+    if(mode==='online'&&p.id&&avatars[p.id]){ const im=document.createElement('img'); im.src=avatars[p.id]; im.alt=''; av.appendChild(im); }
+    else av.textContent=p.bot?'ИИ':c.ini;
+    d.querySelector('.nm').textContent=pName(pi);
+    box.appendChild(d);
+  });
+}
+let uiStatus=null;
+function openDrawer(v){
+  $('drawer').hidden=!v; $('gearBtn').classList.toggle('on',v); $('gearBtn').setAttribute('aria-expanded',String(v));
+  if(v) closePalette();
+}
+function updateSide(){
+  const inGame=S.status==='play'||S.status==='over';
+  $('vGame').hidden=!inGame;
+  $('vLobby').hidden=inGame||mode!=='online';
+  $('vSetup').hidden=inGame||mode==='online';
+  const sSlot=!inGame&&(mode==='online'?$('lobbySettingsSlot'):$('setupSettingsSlot'));
+  $('settingsBox').hidden=inGame;
+  if(sSlot&&$('settingsBox').parentNode!==sSlot) sSlot.appendChild($('settingsBox'));
+  applyChat();
+  if(S.status!==uiStatus){ if(S.status==='lobby') openDrawer(true); else if(uiStatus==='lobby') openDrawer(false); uiStatus=S.status; }
+  if(!inGame) $('log').innerHTML='<li>Гонка ещё не началась.</li>';
+  if(!inGame){ renderSettings(); if(mode==='online') renderLobby(); else renderSetup(); }
+  else renderGame();
+}
+function renderSettings(){
+  const ed=canEditField(), st=S.settings;
+  $('optCars').value=String(st.carsPer); $('optLaps').value=String(st.laps); $('optExit').value=st.exit||'any'; $('optKnock').value=st.knock||'garage';
+  ['optCars','optLaps','optExit','optKnock','optRandom','edClassic','edRandom','edClear'].forEach(id=>$(id).disabled=!ed);
+  $('optRandom').checked=!!st.randomEach;
+  $('editNote').textContent=ed?'Нажмите на клетку трассы, чтобы выбрать её тип, или заполните трассу кнопкой. Стартовые клетки не меняются.':'Трассу и правила настраивает хозяин комнаты.';
+  const counts={}; Object.values(st.special).forEach(t=>counts[t]=(counts[t]||0)+1);
+  $('legend').innerHTML=TYPE_KEYS.map(k=>'<li><i style="background:'+TYPES[k].bg+'"></i><span><b>'+TYPES[k].name+'</b> — '+TYPES[k].rule+'</span><span class="n">'+(counts[k]||0)+'</span></li>').join('')+
+    ((st.knock||'garage')==='off'?'':'<li><i style="background:'+PLAIN_BG+'"></i><span><b>Сбивание</b> — встал на клетку с машиной соперника, и она '+((st.knock||'garage')==='back3'?'откатывается на 3 клетки назад':'возвращается к себе в гараж')+'. Нельзя сбить на стартовых клетках и на клетках съезда к финишу.</span><span class="n"></span></li>');
+  $('legendPopList').innerHTML=$('legend').innerHTML;
+}
+function renderSetup(){
+  $('tabLocal').setAttribute('aria-selected',String(setupTab==='local'));
+  $('tabOnline').setAttribute('aria-selected',String(setupTab==='online'));
+  $('localBox').hidden=setupTab!=='local'; $('onlineBox').hidden=setupTab!=='online';
+  const box=$('slots');
+  if(!box.childElementCount){
+    COLORS.forEach((c,i)=>{
+      const d=document.createElement('label'); d.className='slot'; d.htmlFor='slot'+i;
+      d.innerHTML='<span class="sw" style="background:'+c.hex+'"></span><select id="slot'+i+'" aria-label="'+c.name+'"><option value="human">'+c.name+' — человек</option><option value="bot">'+c.name+' — компьютер</option><option value="off">'+c.name+' — не играют</option></select><select id="slotCar'+i+'" aria-label="Машина: '+c.name+'">'+carOptions()+'</select>';
+      box.appendChild(d);
+      const sel=d.querySelector('select'); sel.value=slots[i]; sel.onchange=()=>{ slots[i]=sel.value; $('localErr').textContent=''; };
+      const cs=$('slotCar'+i); cs.value=slotCars[i]; cs.onchange=()=>{ slotCars[i]=cs.value; };
+    });
+  }
+}
+function setMyCar(type){
+  if(!CAR_TYPES_LIST[type]) return;
+  try{ localStorage.setItem('mashinki-car',type); }catch(e){}
+  if(mode!=='online'||S.status!=='lobby') return;
+  const me=S.players.find(p=>p.id===uid); if(!me||me.car===type) return;
+  commit(s=>{ const p=s.players.find(x=>x.id===uid); if(p) p.car=type; });
+}
+let carPrefApplied=false;
+function renderLobby(){
+  const mc=$('myCar'); if(!mc.childElementCount) mc.innerHTML=carOptions();
+  const me=S.players.find(p=>p.id===uid);
+  if(me&&!me.car&&!carPrefApplied){ carPrefApplied=true; let pref=null; try{ pref=localStorage.getItem('mashinki-car'); }catch(e){} if(pref&&CAR_TYPES_LIST[pref]) setTimeout(()=>setMyCar(pref),0); }
+  mc.value=me&&me.car?me.car:'sport';
+  $('roomCode').textContent=roomCode||'----';
+  const ul=$('lobbyPlayers'); ul.innerHTML='';
+  S.players.forEach((p,i)=>{
+    const li=document.createElement('li');
+    li.innerHTML='<span class="sw" style="background:'+col(S,i).hex+'"></span><span class="nm"></span>'+(p.id===S.host?'<span class="tag">хозяин</span>':'');
+    li.querySelector('.nm').textContent=pName(i)+' · '+team(S,i)+' · '+CAR_TYPES_LIST[carTypeOf(i)]; ul.appendChild(li);
+  });
+  const host=S.host===uid;
+  $('startOnline').hidden=!host; $('startOnline').disabled=S.players.length<2;
+  $('lobbyNote').textContent=host?(S.players.length<2?'Нужен хотя бы ещё один игрок.':'Все на месте? Жмите «Старт».'):'Хозяин комнаты настраивает трассу и начинает гонку.';
+}
+function renderGame(){
+  $('log').innerHTML=S.log.map(t=>'<li>'+esc(t)+'</li>').join('');
+  $('toMenu').textContent=mode==='online'?'Выйти из комнаты':'В меню';
+  const cp=S.players[S.cur];
+  $('skipTurn').hidden=!(mode==='online'&&S.host===uid&&S.status==='play'&&cp&&cp.id!==uid);
+}
+
+/* ---------- local flow ---------- */
+function startLocal(){
+  const order=slots.map((v,i)=>({v,i})).filter(x=>x.v!=='off').map(x=>x.i);
+  if(order.length<2){ $('localErr').textContent='Нужно хотя бы две команды.'; return; }
+  commit(s=>{ s.players=order.map(i=>({id:null,bot:slots[i]==='bot',slot:i,car:slotCars[i]})); startMatch(s); });
+}
+function newRace(){
+  if(mode==='online'){ if(S.host!==uid) return; commit(s=>{ s.status='lobby'; s.cars=[]; s.log=[]; s.winner=null; }); }
+  else commit(s=>{ s.status='lobby'; s.cars=[]; s.players=[]; s.log=[]; s.winner=null; });
+}
+function toMenu(){ if(mode==='online'){ leaveRoom(); return; } newRace(); }
+
+/* ---------- online flow ---------- */
+function setOnlineState(){
+  const okDb=!!(db&&uid);
+  $('createRoom').disabled=!okDb; $('joinBtn').disabled=!okDb;
+  $('onlineState').textContent=okDb?'Создайте комнату и отправьте друзьям ссылку-приглашение или войдите по их коду.'
+    :(window.FIREBASE_CONFIG&&window.FIREBASE_CONFIG.databaseURL?'Не удалось подключиться к базе. Проверьте интернет и настройки Firebase.':'Онлайн ещё не настроен: впишите настройки Firebase в начало файла index.html (см. инструкцию).');
+}
+function genCode(){ const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s=''; for(let i=0;i<4;i++) s+=a[Math.floor(Math.random()*a.length)]; return s; }
+async function createRoom(){
+  if(!db||!uid) return; $('onlineErr').textContent=''; if(!needName('onlineErr')) return; $('createRoom').disabled=true;
+  try{
+    let code, ref;
+    for(let k=0;k<5;k++){ code=genCode(); ref=db.doc('rooms/'+code); const sn=await ref.get(); if(!sn.exists) break; }
+    const s=baseState(clone(S.settings)); s.host=uid; s.players=[{id:uid,bot:false,name:myName}]; s.seq=1;
+    await ref.set(s);
+    enterRoom(code,ref);
+  }catch(e){ $('onlineErr').textContent=e&&e.code==='invalid_argument'?permText():'Не получилось создать комнату. Попробуйте ещё раз.'; }
+  $('createRoom').disabled=false;
+}
+async function joinRoom(codeIn,silent){
+  if(!db||!uid) return;
+  const code=String(codeIn||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(code.length!==4){ if(!silent) $('onlineErr').textContent='Код состоит из 4 символов.'; return; }
+  if(!silent&&!needName('onlineErr')) return;
+  $('onlineErr').textContent=''; $('joinBtn').disabled=true;
+  try{
+    const ref=db.doc('rooms/'+code);
+    let got=false; for(let k=0;k<4&&!got;k++){ const r=await ref.acquire({holder:uid,ttlMs:4000}); got=r.acquired; if(!got) await sleep(700); }
+    const sn=await ref.get();
+    if(!sn.exists){ if(!silent) $('onlineErr').textContent='Комната '+code+' не найдена.'; throw 0; }
+    const d=sn.data();
+    if(!(d.players||[]).some(p=>p.id===uid)){
+      if(d.status!=='lobby'){ if(!silent) $('onlineErr').textContent='В этой комнате гонка уже идёт.'; throw 0; }
+      if(d.players.length>=4){ if(!silent) $('onlineErr').textContent='Комната заполнена: уже 4 игрока.'; throw 0; }
+      const res=await ref.mutate(o=>{ if(o.status==='lobby'&&o.players.length<4&&!o.players.some(p=>p.id===uid)){ o.players.push({id:uid,bot:false,name:myName}); o.seq=(o.seq||0)+1; } return o; });
+      if(!res||!res.players.some(p=>p.id===uid)){ if(!silent) $('onlineErr').textContent='Не получилось занять место: комната заполнилась или гонка началась.'; throw 0; }
+    }
+    enterRoom(code,ref);
+  }catch(e){
+    if(e&&e.code&&!silent) $('onlineErr').textContent=e.code==='invalid_argument'?permText():'Не получилось войти. Попробуйте ещё раз.';
+    if(silent) forgetRoom();
+  }
+  $('joinBtn').disabled=false;
+}
+function enterRoom(code,ref){
+  clearTimeout(botTimer);
+  mode='online'; roomCode=code; roomRef=ref; lastSeq=-1; chatDocs={};
+  try{ localStorage.setItem('mashinki-room',code); }catch(e){}
+  if(unsub) unsub();
+  unsub=ref.onSnapshot(sn=>{
+    if(!sn.exists){ $('onlineErr').textContent='Комната закрыта.'; exitOnline(); return; }
+    receive(sn.data());
+  },()=>{ $('gameErr').textContent='Связь с комнатой потеряна. Обновите страницу.'; $('lobbyErr').textContent=$('gameErr').textContent; });
+  startChat(code);
+}
+function forgetRoom(){ try{ localStorage.removeItem('mashinki-room'); }catch(e){} }
+function exitOnline(){
+  if(unsub){ unsub(); unsub=null; }
+  if(chatUnsub){ chatUnsub(); chatUnsub=null; }
+  forgetRoom();
+  const settings=clone(S.settings);
+  mode='local'; roomRef=null; roomCode=null; setupTab='online'; lastSeq=-1; chatDocs={}; chatOpen=false; unread=0; applyChat();
+  ['gameErr','lobbyErr','chatErr'].forEach(id=>$(id).textContent='');
+  receive(baseState(settings));
+}
+async function leaveRoom(){
+  const ref=roomRef, s=clone(S);
+  if(ref&&s.status==='lobby'){
+    try{
+      const left=await ref.mutate(o=>{ o.players=o.players.filter(p=>p.id!==uid); if(o.host===uid&&o.players.length) o.host=o.players[0].id; o.seq=(o.seq||0)+1; o.events=[]; return o; });
+      if(left&&!left.players.length) await ref.delete();
+    }catch(e){}
+  }
+  exitOnline();
+}
+function startOnline(){ if(S.host!==uid||S.players.length<2) return; commit(s=>startMatch(s)); }
+function skipTurn(){
+  if(mode!=='online'||S.host!==uid||S.status!=='play') return;
+  commit(s=>{ s.log.unshift(team(s,s.cur)+': ход пропущен хозяином комнаты'); endTurn(s,false); });
+}
+async function refreshNames(){
+  if(!user) return;
+  const ids=[...new Set(S.players.map(p=>p.id).concat(Object.keys(chatDocs)).filter(Boolean))]; if(!ids.length) return;
+  try{
+    const ps=await user.profiles(ids); let ch=false;
+    ids.forEach(id=>{ const p=ps[id]||{}; const n=p.name||''; if(names[id]!==n){ names[id]=n; ch=true; } if(p.avatarUrl&&avatars[id]!==p.avatarUrl){ avatars[id]=p.avatarUrl; ch=true; } });
+    if(ch&&!animating){ updateSide(); updateDock(); renderCards(); renderChat(); }
+  }catch(e){}
+}
+
+/* ---------- chat ---------- */
+let chatDocs={}, chatQ=Promise.resolve(), chatOpen=false, unread=0, lastSeenT=0, chatPrimed=false;
+const chatNames={};
+const CHAT_ONLY=!!new URLSearchParams(location.search).get('chatwin');
+function applyChat(){
+  const on=mode==='online'||CHAT_ONLY;
+  $('cwTitle').textContent=on&&roomCode?'Чат · комната '+roomCode:'Чат';
+  $('chatInput').disabled=!on; $('chatSend').disabled=!on;
+  if(!on) $('chatList').innerHTML='<li class="empty">Чат работает в онлайн-комнате. Нажмите на шестерёнку → «Онлайн», чтобы создать комнату или войти в неё.</li>';
+}
+function setChatOpen(v){ chatOpen=v||true; }
+function startChat(code){
+  if(chatUnsub) chatUnsub();
+  chatPrimed=false; lastSeenT=0; unread=0;
+  chatOpen=true;
+  applyChat();
+  renderChat();
+  chatUnsub=db.collection('rooms/'+code+'/chat').onSnapshot(snap=>{
+    const next={}; snap.docs.forEach(d=>{ const v=d.data(); if(v&&Array.isArray(v.msgs)) next[d.id]=v.msgs; if(v&&v.name) chatNames[d.id]=String(v.name).slice(0,24); });
+    chatDocs=next; renderChat(); refreshNames();
+  },()=>{ $('chatErr').textContent='Чат недоступен. Обновите страницу.'; });
+}
+function renderChat(){
+  const ul=$('chatList'); const atBottom=ul.scrollHeight-ul.scrollTop-ul.clientHeight<40;
+  const all=[]; Object.keys(chatDocs).forEach(id=>chatDocs[id].forEach(m=>{ if(m&&typeof m.x==='string') all.push({id,t:+m.t||0,x:m.x}); }));
+  all.sort((a,b)=>a.t-b.t);
+  const maxT=all.length?all[all.length-1].t:0;
+  if(chatPrimed){ const fresh=all.filter(m=>m.t>lastSeenT&&m.id!==uid).length; if(fresh&&!chatOpen&&!CHAT_ONLY){ unread+=fresh; applyChat(); } }
+  if(maxT>lastSeenT) lastSeenT=maxT; chatPrimed=true;
+  ul.innerHTML='';
+  if(!all.length){ ul.innerHTML='<li class="empty">Сообщений пока нет. Напишите первым.</li>'; return; }
+  all.slice(-80).forEach(m=>{
+    const pi=S.players.findIndex(p=>p.id===m.id);
+    const li=document.createElement('li');
+    li.innerHTML='<span class="who"><span class="sw" style="width:10px;height:10px;background:'+(pi>=0?col(S,pi).hex:'#9aa198')+'"></span><span class="n"></span><time></time></span><span class="tx"></span>';
+    li.querySelector('.n').textContent=m.id===uid?'Вы':(names[m.id]||chatNames[m.id]||(pi>=0?'Игрок '+(pi+1):'Гость'));
+    const d=new Date(m.t); li.querySelector('time').textContent=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+    li.querySelector('.tx').textContent=m.x.slice(0,200);
+    ul.appendChild(li);
+  });
+  if(atBottom||all.length<6||!chatOpen) ul.scrollTop=ul.scrollHeight;
+}
+$('chatForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const inp=$('chatInput'), text=inp.value.trim().slice(0,200);
+  if(!text||!db||!uid||!roomCode) return;
+  inp.value=''; $('chatErr').textContent='';
+  const ref=db.doc('rooms/'+roomCode+'/chat/'+uid);
+  chatQ=chatQ.then(()=>{
+    const mine=(chatDocs[uid]||[]).slice(-24).concat([{t:Date.now(),x:text}]);
+    chatDocs[uid]=mine; renderChat();
+    return ref.set({msgs:mine,name:myName});
+  }).catch(err=>{ $('chatErr').textContent=err&&err.code==='invalid_argument'?permText():'Сообщение не отправилось. Попробуйте ещё раз.'; });
+});
+
+/* ---------- editor & picking ---------- */
+let downXY=null, palIdx=-1;
+cv.addEventListener('pointerdown',e=>{ downXY=[e.clientX,e.clientY]; });
+let hoverT=0;
+cv.addEventListener('pointermove',e=>{
+  if(!ok3d||e.buttons||!die3d) return; const now=performance.now(); if(now-hoverT<60) return; hoverT=now;
+  const r=cv.getBoundingClientRect(); raycaster.setFromCamera(new THREE.Vector2(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1),camera);
+  const overDie=raycaster.intersectObject(die3d,false).length>0;
+  const sel=selectableSet();
+  const overCar=!overDie&&sel.size>0&&raycaster.intersectObjects(cars3d.map(o=>o.g).filter(Boolean),true).some(h=>sel.has(h.object.userData.ci));
+  cv.style.cursor=overDie||overCar?'pointer':'';
+});
+cv.addEventListener('pointerup',e=>{
+  if(!downXY||!ok3d) return; const moved=Math.hypot(e.clientX-downXY[0],e.clientY-downXY[1]); downXY=null;
+  if(moved>6) return;
+  const r=cv.getBoundingClientRect(), ndc=new THREE.Vector2(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);
+  raycaster.setFromCamera(ndc,camera);
+  if(die3d&&raycaster.intersectObject(die3d,false).length){ if(S.status==='play') actRoll(false); else if(S.status==='lobby'&&(mode==='local'||S.host===uid)) $('rollBtn').click(); return; }
+  const sel=selectableSet();
+  if(sel.size){
+    const hits=raycaster.intersectObjects(cars3d.map(o=>o.g).filter(Boolean),true);
+    for(const h of hits){ const ci=h.object.userData.ci; if(sel.has(ci)){ if(S.phase==='swap') actSwap(ci,false); else actChoose(ci,false); return; } }
+  }
+  if(canEditField()){
+    const hit=raycaster.intersectObjects(tiles,false)[0];
+    if(hit&&hit.object.userData.ring&&!isStart(hit.object.userData.idx)) openPalette(hit.object.userData.idx,e.clientX,e.clientY); else closePalette();
+  }
+});
+function openPalette(idx,x,y){
+  palIdx=idx; const p=$('palette'), cur=S.settings.special[idx]||'';
+  p.innerHTML='<div class="ph">Клетка трассы</div>'+
+    [['','Обычная',PLAIN_BG]].concat(TYPE_KEYS.map(k=>[k,TYPES[k].name,TYPES[k].bg])).map(([k,n,bg])=>'<button type="button" data-t="'+k+'"'+(k===cur?' class="cur"':'')+'><i style="background:'+bg+'"></i>'+n+'</button>').join('');
+  p.hidden=false;
+  const sr=stage.getBoundingClientRect(), w=p.offsetWidth, h=p.offsetHeight;
+  p.style.left=Math.max(8,Math.min(sr.width-w-8,x-sr.left+10))+'px';
+  p.style.top=Math.max(8,Math.min(sr.height-h-8,y-sr.top-h/2))+'px';
+  p.querySelectorAll('button').forEach(b=>b.onclick=()=>{ setCell(palIdx,b.dataset.t); closePalette(); });
+  const first=p.querySelector('button.cur')||p.querySelector('button'); first&&first.focus();
+}
+function closePalette(){ $('palette').hidden=true; palIdx=-1; }
+function setCell(idx,t){
+  if(!canEditField()||isStart(idx)) return;
+  commit(s=>{ const sp=Object.assign({},s.settings.special); if(t) sp[idx]=t; else delete sp[idx]; s.settings.special=sp; s.settings.randomEach=false; });
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){ closePalette(); if(!$('drawer').hidden) openDrawer(false); return; }
+  const tag=(e.target.tagName||'').toLowerCase(); if(tag==='input'||tag==='select'||tag==='button') return;
+  if(e.code==='Space'||e.key==='Enter'){ if(S.status==='play'){ e.preventDefault(); actRoll(false); } }
+  else if(/^[1-4]$/.test(e.key)&&S.status==='play'&&S.phase==='choose'){
+    const mine=S.cars.map((c,i)=>i).filter(i=>S.cars[i].p===S.cur); const ci=mine[+e.key-1]; if(ci!==undefined) actChoose(ci,false);
+  }
+});
+document.addEventListener('pointerdown',e=>{ if(!$('palette').hidden&&!$('palette').contains(e.target)&&e.target!==cv) closePalette(); });
+
+/* ---------- wiring ---------- */
+$('optCars').onchange=e=>setSettings({carsPer:+e.target.value});
+$('optLaps').onchange=e=>setSettings({laps:+e.target.value});
+$('optExit').onchange=e=>setSettings({exit:e.target.value});
+$('optKnock').onchange=e=>setSettings({knock:e.target.value});
+$('myCar').onchange=e=>setMyCar(e.target.value);
+$('edClassic').onclick=()=>setSettings({special:classicField(),randomEach:false});
+$('optRandom').onchange=e=>setSettings({randomEach:e.target.checked});
+$('edRandom').onclick=()=>setSettings({special:randomField()});
+$('edClear').onclick=()=>setSettings({special:{},randomEach:false});
+$('tabLocal').onclick=()=>{ setupTab='local'; renderSetup(); };
+$('tabOnline').onclick=()=>{ setupTab='online'; renderSetup(); };
+$('startLocal').onclick=startLocal;
+$('createRoom').onclick=createRoom;
+$('joinBtn').onclick=()=>joinRoom($('joinCode').value,false);
+$('joinCode').addEventListener('keydown',e=>{ if(e.key==='Enter') joinRoom($('joinCode').value,false); });
+$('startOnline').onclick=startOnline;
+$('leaveRoom').onclick=leaveRoom;
+$('toMenu').onclick=toMenu;
+$('skipTurn').onclick=skipTurn;
+$('camBtn').onclick=fitCamera;
+$('gearBtn').onclick=()=>openDrawer($('drawer').hidden);
+$('drClose').onclick=()=>openDrawer(false);
+$('legendBtn').onclick=()=>{ const p=$('legendPop'); p.hidden=!p.hidden; $('legendBtn').setAttribute('aria-expanded',String(!p.hidden)); };
+document.addEventListener('pointerdown',e=>{ const p=$('legendPop'); if(!p.hidden&&!p.contains(e.target)&&!$('legendBtn').contains(e.target)){ p.hidden=true; $('legendBtn').setAttribute('aria-expanded','false'); } });
+$('copyCode').onclick=()=>{
+  const code=roomCode||''; const b=$('copyCode');
+  try{ navigator.clipboard.writeText(code).then(()=>{ b.textContent='Скопировано'; setTimeout(()=>b.textContent='Скопировать код',1500); },()=>selectCode()); }catch(e){ selectCode(); }
+};
+function inviteUrl(){ return location.origin+location.pathname+'?room='+(roomCode||''); }
+$('copyLink').onclick=()=>{
+  const url=inviteUrl(), b=$('copyLink');
+  const done=()=>{ b.textContent='Ссылка скопирована'; setTimeout(()=>b.textContent='Скопировать ссылку-приглашение',1600); };
+  try{ navigator.clipboard.writeText(url).then(done,()=>window.prompt('Скопируйте ссылку:',url)); }catch(e){ window.prompt('Скопируйте ссылку:',url); }
+};
+$('cwPop').hidden=CHAT_ONLY;
+$('cwPop').onclick=()=>{
+  if(!roomCode) return;
+  const w=window.open(location.pathname+'?chatwin='+roomCode,'mashinki-chat-'+roomCode,'width=380,height=580');
+  if(w){ setChatOpen(false); }
+};
+function selectCode(){ const r=document.createRange(); r.selectNodeContents($('roomCode')); const s=getSelection(); s.removeAllRanges(); s.addRange(r); }
+
+/* ---------- Firebase backend ---------- */
+let rt=null;
+function makeDb(){
+  const enc=p=>p.replace(/\//g,'|');
+  const docRef=path=>{ const parts=path.split('/'); const id=parts.pop(); return {id,ref:rt.ref('db/'+enc(parts.join('/'))+'/'+id)}; };
+  const parse=v=>{ if(v==null||typeof v.json!=='string') return undefined; try{ return JSON.parse(v.json); }catch(e){ return undefined; } };
+  const wrapErr=e=>{ throw {code:/permission/i.test(String(e&&(e.code||e.message)))?'invalid_argument':'unavailable',message:String(e&&e.message||e)}; };
+  return {
+    doc(path){
+      const {id,ref}=docRef(path);
+      const snap=v=>{ const d=parse(v); return {id,exists:d!==undefined,data:()=>d}; };
+      return {id,path,
+        get:()=>ref.once('value').then(sn=>snap(sn.val()),wrapErr),
+        set:d=>ref.set({json:JSON.stringify(d),ts:Date.now()}).catch(wrapErr),
+        update:d=>ref.transaction(cur=>{ const o=parse(cur); if(o===undefined) return cur; Object.assign(o,d); return {json:JSON.stringify(o),ts:Date.now()}; }).catch(wrapErr).then(()=>{}),
+        mutate:fn=>ref.transaction(cur=>{ const o=parse(cur); if(o===undefined) return cur; const r=fn(o); return {json:JSON.stringify(r),ts:Date.now()}; }).then(res=>parse(res.snapshot.val()),wrapErr),
+        delete:()=>ref.remove().catch(wrapErr),
+        acquire:()=>Promise.resolve({acquired:true}),
+        onSnapshot(next,err){ const cb=sn=>next(snap(sn.val())); ref.on('value',cb,()=>err&&err({code:'unavailable'})); return ()=>ref.off('value',cb); }
+      };
+    },
+    collection(path){
+      const ref=rt.ref('db/'+enc(path));
+      return {path,
+        onSnapshot(next,err){
+          const cb=sn=>{ const docs=[]; sn.forEach(ch=>{ const d=parse(ch.val()); if(d!==undefined) docs.push({id:ch.key,exists:true,data:()=>d}); }); next({docs,size:docs.length,empty:!docs.length}); };
+          ref.on('value',cb,()=>err&&err({code:'unavailable'})); return ()=>ref.off('value',cb);
+        }
+      };
+    }
+  };
+}
+function localId(){
+  let id=null; try{ id=localStorage.getItem('mashinki-uid'); }catch(e){}
+  if(!id){ id='p'+Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4); try{ localStorage.setItem('mashinki-uid',id); }catch(e){} }
+  return id;
+}
+function nameOf(id){ const p=S.players.find(x=>x.id===id); return (p&&p.name)||chatNames[id]||''; }
+$('myName').value=myName;
+$('myName').addEventListener('change',()=>{ const v=$('myName').value.trim().slice(0,20); if(v){ myName=v; try{ localStorage.setItem('mashinki-name',v); }catch(e){} } });
+
+(function initBackend(){
+  uid=localId();
+  const cfg=window.FIREBASE_CONFIG;
+  if(window.firebase&&cfg&&cfg.databaseURL){
+    try{
+      const app=firebase.apps.length?firebase.app():firebase.initializeApp(cfg);
+      rt=app.database(); db=makeDb();
+      user={profiles:async ids=>{ const r={}; [].concat(ids).forEach(id=>{ r[id]={id,name:nameOf(id),avatarUrl:null}; }); return r; }};
+    }catch(e){ console.error(e); db=null; }
+  }
+})();
+
+const params=new URLSearchParams(location.search);
+if(CHAT_ONLY){
+  document.body.classList.add('chatonly');
+  const code=String(params.get('chatwin')||'').toUpperCase();
+  roomCode=code; document.title='Чат · '+code;
+  if(db){
+    db.doc('rooms/'+code).onSnapshot(sn=>{ if(sn.exists){ S.players=sn.data().players||[]; refreshNames(); renderChat(); } });
+    startChat(code);
+  } else { $('chatErr').textContent='Онлайн не настроен.'; }
+  applyChat();
+} else {
+  init3D();
+  receive(S);
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ if(ok3d){ boardKey=''; renderAll(); } });
+  setOnlineState();
+  const inv=String(params.get('room')||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(inv.length===4){
+    setupTab='online'; $('joinCode').value=inv; renderSetup();
+    if(db&&myName) joinRoom(inv,false);
+    else if(db){ $('onlineErr').textContent='Вас пригласили в комнату '+inv+'. Введите имя и нажмите «Войти».'; }
+  } else if(db){
+    let saved=null; try{ saved=localStorage.getItem('mashinki-room'); }catch(e){} if(saved) joinRoom(saved,true);
+  }
+}
+})();
+</script>
+</body>
+</html>
